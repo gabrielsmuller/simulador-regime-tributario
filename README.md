@@ -1,0 +1,69 @@
+# Simulador da Reforma Tributária
+
+Compara, ano a ano de 2027 a 2033, quanto a empresa pagaria de imposto em **Simples Unificado, Simples Híbrido, Lucro Presumido e Lucro Real**, com recomendação, ponto de virada e crédito entregue a clientes PJ. Público: o empresário final.
+
+## Rodar
+
+```bash
+npm install
+```
+```bash
+npm run dev
+```
+Abra http://localhost:5173.
+
+```bash
+npm test
+```
+```bash
+npm run build
+```
+O build gera um site estático em `dist/`.
+
+## Hospedagem (AWS)
+
+Piloto no ar em **https://d3ikdc9bz77qrz.cloudfront.net**.
+
+| Recurso | Valor |
+|---|---|
+| Conta / região | 958620575923 / us-east-1 |
+| Bucket S3 (privado, criptografado) | `simulador-reforma-958620575923` |
+| CloudFront | `E2A2R1X5DYN9KT` (HTTPS, HTTP/3, cabeçalhos de segurança gerenciados) |
+| Acesso ao bucket | só pela distribuição, via Origin Access Control `E1H6HDIBPSBCD6` |
+
+Todos os recursos têm a tag `Project=simulador-reforma`. Para publicar uma nova versão:
+
+```bash
+npm run deploy
+```
+O script faz o build, envia para o S3 (assets com cache de 1 ano, `index.html` sem cache) e invalida o `index.html` no CloudFront.
+
+## Estrutura
+
+```
+src/
+├─ motor/                 # cálculo determinístico, sem I/O (testado)
+│  ├─ tipos.ts            # contratos de entrada e resultado
+│  ├─ parametros.ts       # TODA regra numérica: transição, anexos do Simples, ICMS por UF, atividades
+│  ├─ regimes.ts          # cálculo dos 4 regimes + memória de cálculo
+│  ├─ simular.ts          # orquestra os 7 anos, menor carga, viradas, recomendação
+│  └─ motor.test.ts
+└─ ui/
+   ├─ App.tsx             # barra superior, etapas e estado salvo no navegador
+   ├─ EtapaDados.tsx      # etapa 1: atividade, regime, números, premissas + enquadramento
+   ├─ EtapaAnalise.tsx    # etapa 2: resumo, comparativo, tabelas, crédito, memória, base legal
+   ├─ graficos.tsx        # evolução (linhas com tooltip) e composição por tributo
+   ├─ diagnostico.ts      # validação dos dados e pontos de atenção
+   ├─ campos.tsx          # campos, seções, painéis, ícones
+   └─ styles.css          # tema claro, responsivo e impressão
+```
+
+Documento de projeto e regras: [docs/PROJETO.md](docs/PROJETO.md).
+
+## Premissas a validar com um contador antes de publicar
+Os pontos estão marcados com ⚠️ em `src/motor/parametros.ts`:
+- alíquotas de referência do IBS/CBS (padrão: 8,8% + 17,7%);
+- repartição do DAS pós-reforma (o MVP supõe que a fatia de PIS/Cofins vira CBS e que a de ICMS/ISS migra para IBS no ritmo da transição);
+- majoração da presunção pela LC 224/2025;
+- alíquotas modais de ICMS por UF;
+- prazo da opção Unificado × Híbrido.
