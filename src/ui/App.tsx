@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   FILTRO_PADRAO, OPERACAO_PADRAO, entradaInicial, entradaValida, filtroValido, operacaoValida, usePersistente,
 } from './estado';
+import type { Exemplo } from './exemplos';
 import { ModuloIcms } from './icms/ModuloIcms';
 import { ModuloBeneficios } from './ModuloBeneficios';
 import { ModuloRegimes } from './ModuloRegimes';
@@ -36,6 +37,11 @@ export function App() {
     window.addEventListener('hashchange', ouvir);
     return () => window.removeEventListener('hashchange', ouvir);
   }, []);
+  const aplicarExemplo = (x: Exemplo) => {
+    setEmpresa(x.entrada);
+    setOperacao({ ...OPERACAO_PADRAO, ...x.operacao, valor: x.operacao?.valor ?? Math.round(x.entrada.faturamentoMensal * 0.3) });
+    setFiltro({ perfis: x.perfis ?? ['ecommerce'] });
+  };
   const ir = (m: Modulo) => {
     setModulo(m);
     try { history.replaceState(null, '', `#${m}`); } catch { /* ignora */ }
@@ -70,7 +76,7 @@ export function App() {
       </header>
 
       <main className="conteudo">
-        {modulo === 'regimes' && <ModuloRegimes entrada={empresa} onChange={setEmpresa} podeImprimir={podeImprimir} />}
+        {modulo === 'regimes' && <ModuloRegimes entrada={empresa} onChange={setEmpresa} onExemplo={aplicarExemplo} podeImprimir={podeImprimir} />}
         {modulo === 'st-difal' && <ModuloIcms empresa={empresa} onEmpresa={setEmpresa} op={operacao} onOp={setOperacao} />}
         {modulo === 'beneficios' && (
           <ModuloBeneficios empresa={empresa} op={operacao} onOp={setOperacao} filtro={filtro} onFiltro={setFiltro} onIrIcms={() => ir('st-difal')} />

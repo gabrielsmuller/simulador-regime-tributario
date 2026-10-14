@@ -3,11 +3,12 @@ import { simular, type Entrada } from '../motor';
 import { validar } from './diagnostico';
 import { EtapaAnalise } from './EtapaAnalise';
 import { EtapaDados } from './EtapaDados';
+import type { Exemplo } from './exemplos';
 
 type Etapa = 'dados' | 'analise';
 
-export function ModuloRegimes({ entrada, onChange, podeImprimir }: {
-  entrada: Entrada; onChange: (e: Entrada) => void; podeImprimir: boolean;
+export function ModuloRegimes({ entrada, onChange, onExemplo, podeImprimir }: {
+  entrada: Entrada; onChange: (e: Entrada) => void; onExemplo: (x: Exemplo) => void; podeImprimir: boolean;
 }) {
   const [etapa, setEtapa] = useState<Etapa>('dados');
   useEffect(() => { window.scrollTo({ top: 0 }); }, [etapa]);
@@ -31,7 +32,7 @@ export function ModuloRegimes({ entrada, onChange, podeImprimir }: {
         ))}
       </nav>
       {etapa === 'dados' || !resultado ? (
-        <EtapaDados entrada={entrada} onChange={onChange} onAvancar={() => setEtapa('analise')} />
+        <EtapaDados entrada={entrada} onChange={onChange} onExemplo={onExemplo} onAvancar={() => setEtapa('analise')} />
       ) : (
         <EtapaAnalise entrada={entrada} resultado={resultado} onEditar={() => setEtapa('dados')} podeImprimir={podeImprimir} />
       )}

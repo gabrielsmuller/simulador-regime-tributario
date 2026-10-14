@@ -1,6 +1,6 @@
 import { ATIVIDADES, LIMITES, NOMES_REGIME, enquadramento, type Entrada, type Resultado } from '../motor';
 import type { Severidade } from './campos';
-import { pct } from './formato';
+import { brl, pct } from './formato';
 
 export interface Mensagem { tipo: Severidade; titulo: string; texto: string }
 
@@ -54,6 +54,13 @@ export function pontosDeAtencao(e: Entrada, r: Resultado): Mensagem[] {
     m.push({
       tipo: 'atencao', titulo: 'Acréscimo da LC 224/2025 no Presumido',
       texto: 'Incluímos a presunção 10% maior sobre a receita acima de R$ 5 milhões. A regra é questionada no STF (ADI 7.920).',
+    });
+  }
+  const difal = atual.linhas.find((l) => l.tributo === 'DIFAL')?.valor ?? 0;
+  if (difal > 0 && e.ufDestinoPrincipal) {
+    m.push({
+      tipo: 'atencao', titulo: `DIFAL de ${brl(difal)}/mês para ${e.ufDestinoPrincipal}`,
+      texto: `É ${pct(difal / atual.carga, 0)} da sua carga em 2027. No Simples ele não é cobrado; veja os destinos e benefícios nos módulos de ST e DIFAL e de Benefícios.`,
     });
   }
   if (ativ.creditoVedado) {

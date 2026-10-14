@@ -4,7 +4,7 @@ import {
 } from '../motor';
 import { Campo, CampoNumero, Icone, Secao, Segmentado } from './campos';
 import { validar } from './diagnostico';
-import { EXEMPLOS } from './exemplos';
+import { EXEMPLOS, type Exemplo } from './exemplos';
 import { brl, escreverNumero, pct } from './formato';
 
 const REGIMES_HOJE: { valor: Regime; rotulo: string }[] = [
@@ -15,8 +15,8 @@ const REGIMES_HOJE: { valor: Regime; rotulo: string }[] = [
 
 const proporcao = (v: number, fat: number) => (fat > 0 ? `${pct(v / fat, 1)} do faturamento` : '');
 
-export function EtapaDados({ entrada, onChange, onAvancar }: {
-  entrada: Entrada; onChange: (e: Entrada) => void; onAvancar: () => void;
+export function EtapaDados({ entrada, onChange, onAvancar, onExemplo }: {
+  entrada: Entrada; onChange: (e: Entrada) => void; onAvancar: () => void; onExemplo?: (x: Exemplo) => void;
 }) {
   const set = <K extends keyof Entrada>(k: K, v: Entrada[K]) => onChange({ ...entrada, [k]: v });
   const setAv = <K extends keyof Entrada['avancado']>(k: K, v: Entrada['avancado'][K]) =>
@@ -40,7 +40,7 @@ export function EtapaDados({ entrada, onChange, onAvancar }: {
           const ativo = entrada.nomeEmpresa === x.entrada.nomeEmpresa;
           return (
             <button key={x.id} type="button" className={`exemplo ${ativo ? 'on' : ''}`} aria-pressed={ativo}
-              onClick={() => onChange(x.entrada)}>
+              onClick={() => (onExemplo ? onExemplo(x) : onChange(x.entrada))}>
               <b>{x.nome}</b><span>{x.resumo}</span>
             </button>
           );

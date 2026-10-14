@@ -30,7 +30,7 @@ O build gera um site estático em `dist/`.
 
 ## Hospedagem (AWS)
 
-Piloto no ar em **https://d3ikdc9bz77qrz.cloudfront.net**.
+Piloto no ar em **https://simuladortributario.gabrielsmuller.dev** (também em https://d3ikdc9bz77qrz.cloudfront.net).
 
 | Recurso | Valor |
 |---|---|
@@ -38,13 +38,14 @@ Piloto no ar em **https://d3ikdc9bz77qrz.cloudfront.net**.
 | Bucket S3 (privado, criptografado) | `simulador-reforma-958620575923` |
 | CloudFront | `E2A2R1X5DYN9KT` (HTTPS, HTTP/3, cabeçalhos de segurança gerenciados) |
 | Acesso ao bucket | só pela distribuição, via Origin Access Control `E1H6HDIBPSBCD6` |
+| Domínio | `simuladortributario.gabrielsmuller.dev` (Route 53 + certificado ACM em us-east-1) |
 
 Todos os recursos têm a tag `Project=simulador-reforma`. Para publicar uma nova versão:
 
 ```bash
 npm run deploy
 ```
-O script faz o build, envia para o S3 (assets com cache de 1 ano, `index.html` sem cache) e invalida o `index.html` no CloudFront.
+O script roda os testes, faz o build, envia para o S3 (assets com cache de 1 ano, ícones e prévia com 1 dia, `index.html` sem cache) e invalida o cache do CloudFront.
 
 ## Estrutura
 
