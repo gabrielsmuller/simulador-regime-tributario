@@ -96,14 +96,6 @@ export function App() {
           </div>
         </div>
 
-        <button type="button" className="lateral-empresa" title="Dados da empresa" onClick={() => ir('regimes', 'dados')}>
-          <span className="empresa-avatar" aria-hidden="true">{(empresa.nomeEmpresa?.trim() || 'E').charAt(0).toUpperCase()}</span>
-          <span className="nav-rotulo">
-            <b>{empresa.nomeEmpresa?.trim() || 'Sua empresa'}</b>
-            <span>{regime} · {empresa.uf}</span>
-          </span>
-        </button>
-
         <nav className="lateral-nav">
           <p className="nav-grupo">Análises</p>
           {item('regimes', 'Regimes na Reforma', ICONES.regimes)}
