@@ -62,6 +62,11 @@ export interface Entrada {
   margemLucro: number;
   /** fração das vendas feitas para empresas (B2B) */
   percVendasEmpresas: number;
+  /**
+   * fração desses clientes PJ que aproveita crédito de IBS/CBS (padrão 100%).
+   * Não aproveitam: optantes do Simples Unificado, MEI e quem compra para uso próprio sem direito a crédito.
+   */
+  percClientesComCredito?: number;
   /** fração do faturamento vendida a consumidor final de outros estados (gera DIFAL fora do Simples) */
   percVendasOutrosEstados?: number;
   /** principal estado de destino dessas vendas */

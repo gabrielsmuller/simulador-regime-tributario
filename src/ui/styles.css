@@ -989,3 +989,36 @@ details.painel.outros[open] > summary { margin-bottom: 12px !important; }
 .lateral-empresa .nav-rotulo span { font-size: 12px; color: var(--lateral-fraco); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recolhido .lateral-empresa { padding: 6px 0; }
 @media (max-width: 1024px) { .recolhido .lateral-empresa { grid-template-columns: 36px minmax(0, 1fr); justify-items: stretch; padding: 8px; background: none; } }
+
+/* clientes que aproveitam crédito: faixa secundária dentro das vendas a empresas */
+.subfaixa { margin-top: 14px; padding: 12px 14px; background: var(--surface-2); border-left: 3px solid var(--brand-soft); border-radius: 0 6px 6px 0; display: grid; gap: 4px; }
+.subfaixa input[type='range'] { width: 100%; accent-color: var(--brand-2); margin: 4px 0 0; }
+
+/* preço e contratos: barras divergentes em torno de "sem reajuste" */
+.reajustes { display: grid; gap: 2px; }
+.reajuste { display: grid; grid-template-columns: 52px minmax(0, 1fr) 76px 200px; gap: 14px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.reajuste:last-child { border-bottom: 0; }
+.reajuste-ano { font-size: 13px; font-weight: 600; }
+.reajuste-trilho { position: relative; height: 18px; background: var(--surface-2); border-radius: 4px; }
+.reajuste-zero { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--line-2); }
+.reajuste-barra { position: absolute; top: 3px; bottom: 3px; min-width: 2px; border-radius: 3px; }
+.reajuste-barra.sobe { background: var(--bad); opacity: .75; }
+.reajuste-barra.desce { background: var(--good); opacity: .8; }
+.reajuste-valor { font-size: 14px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.reajuste-valor.sobe { color: var(--bad); }
+.reajuste-valor.desce { color: var(--good); }
+.reajuste-preco { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.legenda-reajuste { display: flex; gap: 18px; font-size: 12px; color: var(--ink-3); }
+.legenda-reajuste span { display: inline-flex; align-items: center; gap: 6px; }
+.legenda-reajuste i { width: 10px; height: 10px; border-radius: 2px; }
+.legenda-reajuste i.sobe { background: var(--bad); opacity: .75; }
+.legenda-reajuste i.desce { background: var(--good); opacity: .8; }
+.destaque-credito { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; background: var(--brand-soft); border-radius: 6px; font-size: 13px; color: var(--ink-2); }
+.destaque-credito .icone { flex: none; margin-top: 2px; }
+.contrato-campos { max-width: 720px; }
+.tabela td.pior { color: var(--bad); }
+.tabela td.melhor { color: var(--good); }
+@media (max-width: 640px) {
+  .reajuste { grid-template-columns: 44px minmax(0, 1fr) 64px; }
+  .reajuste-preco { grid-column: 2 / -1; }
+}

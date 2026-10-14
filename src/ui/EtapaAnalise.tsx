@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ANOS, ATIVIDADES, FONTES, NOMES_REGIME, REGIMES, aliquotasIva, criarContexto, segundaOpcao, type Ano, type Entrada, type Regime, type Resultado } from '../motor';
+import { ANOS, ATIVIDADES, FONTES, NOMES_REGIME, REGIMES, aliquotasIva, criarContexto, segundaOpcao, vendasComCredito, type Ano, type Entrada, type Regime, type Resultado } from '../motor';
 import { Icone, Painel, PainelAbas, Segmentado } from './campos';
 import { pontosDeAtencao } from './diagnostico';
 import { brl, pct } from './formato';
@@ -207,7 +207,7 @@ export function EtapaAnalise({ entrada, resultado }: { entrada: Entrada; resulta
             <p className="nota">
               {ativ.creditoVedado
                 ? 'Bares e restaurantes não transferem crédito ao cliente (LC 214, art. 276).'
-                : `Com ${pct(entrada.percVendasEmpresas, 0)} das vendas para empresas, seus clientes aproveitariam ${brl(dados.regimes.SN_HIBRIDO.creditoClientesMes)}/mês no Híbrido e ${brl(dados.regimes.SN_UNIFICADO.creditoClientesMes)}/mês no Unificado.`}
+                : `Com ${pct(vendasComCredito(entrada), 0)} das vendas para empresas que aproveitam crédito, seus clientes aproveitariam ${brl(dados.regimes.SN_HIBRIDO.creditoClientesMes)}/mês no Híbrido e ${brl(dados.regimes.SN_UNIFICADO.creditoClientesMes)}/mês no Unificado.`}
             </p>
           </div>
         )}
@@ -223,6 +223,7 @@ export function EtapaAnalise({ entrada, resultado }: { entrada: Entrada; resulta
                   <tr><th scope="row">CBS / IBS em {ano}</th><td className="num">{(() => { const v = aliquotasIva(criarContexto(entrada, ano)); return `${pct(v.cbs)} / ${pct(v.ibs)}`; })()}</td></tr>
                   <tr><th scope="row">ICMS ({entrada.uf}) / ISS</th><td className="num">{pct(entrada.avancado.aliqIcms, 1)} / {pct(entrada.avancado.aliqIss, 1)}</td></tr>
                   <tr><th scope="row">Compras de fornecedores fora do Simples</th><td className="num">{pct(entrada.avancado.percFornecedoresRegular, 0)}</td></tr>
+                  <tr><th scope="row">Vendas a empresas · aproveitam crédito</th><td className="num">{pct(entrada.percVendasEmpresas, 0)} · {pct(entrada.percClientesComCredito ?? 1, 0)}</td></tr>
                   <tr><th scope="row">Margem (Lucro Real)</th><td className="num">{pct(entrada.margemLucro, 1)}</td></tr>
                   <tr><th scope="row">Crescimento anual</th><td className="num">{pct(entrada.avancado.crescimentoAnual, 1)}</td></tr>
                 </tbody>

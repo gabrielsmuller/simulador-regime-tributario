@@ -1,5 +1,5 @@
 import { NOMES_REGIME } from './parametros';
-import { CALCULADORAS, criarContexto } from './regimes';
+import { CALCULADORAS, criarContexto, vendasComCredito } from './regimes';
 import { ANOS, REGIMES, type Categoria, type Entrada, type Regime, type Resultado, type ResultadoAno, type Virada } from './tipos';
 
 const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -59,11 +59,11 @@ function recomendar(e: Entrada, anos: ResultadoAno[], viradas: Virada[]) {
   }
 
   const un = a27.regimes.SN_UNIFICADO, hi = a27.regimes.SN_HIBRIDO;
-  if (un.elegivel && hi.elegivel && e.percVendasEmpresas >= 0.3 && a27.menor === 'SN_UNIFICADO' && hi.creditoPorReal > 0) {
+  if (un.elegivel && hi.elegivel && vendasComCredito(e) >= 0.3 && a27.menor === 'SN_UNIFICADO' && hi.creditoPorReal > 0) {
     const diff = hi.carga - un.carga;
     const ganhoCliente = hi.creditoClientesMes - un.creditoClientesMes;
     texto.push(
-      `Como ${Math.round(e.percVendasEmpresas * 100)}% das suas vendas são para empresas, vale pesar o Simples Híbrido: ` +
+      `Como ${Math.round(vendasComCredito(e) * 100)}% das suas vendas são para empresas que aproveitam crédito, vale pesar o Simples Híbrido: ` +
       `ele custa ${brl(diff)}/mês a mais, mas seus clientes passam a aproveitar ${brl(ganhoCliente)}/mês a mais de crédito, ` +
       `o que pode deixar seu preço mais competitivo.`);
   }

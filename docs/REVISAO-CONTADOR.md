@@ -67,3 +67,12 @@ Também a validar:
 - Valores em `number` com arredondamento por linha (estimativa). Para laudo formal, migrar para decimal.
 - Os dados ficam só no navegador do usuário (localStorage). Não há cadastro nem servidor.
 - Textos de recomendação são automáticos e determinísticos: revisar o tom e a responsabilidade (termo de uso).
+- Prazo de opção entre Simples Unificado e Híbrido: confirmar o calendário vigente. Temos 30/10/2026 (Res. CGSN 194/2026, prorrogação) para vigorar em jan.–jun./2027; o simuladorreforma.com.br cita janelas em setembro e março (art. 40-D da Res. CGSN 140/2018, redação da 190/2026). Hoje o simulador não exibe prazo; só exibir depois de confirmado.
+
+## 6. Preço e contratos (`src/motor/preco.ts`)
+
+- Base "hoje" (2026): Simples com o mesmo DAS de 2027 (LC 214 manteve a alíquota total; conferir a 6ª faixa contra a LC 123). Presumido com PIS/COFINS cumulativo (0,65% + 3%); Real não cumulativo (1,65% + 7,6%) com crédito sobre todas as compras sem o ICMS (Lei 14.592/2023).
+- ICMS destacado excluído da base do PIS/COFINS (Tema 69). ISS mantido na base (Tema 118). Sem IPI e sem as atividades do Real que seguem no cumulativo (Lei 10.833, art. 10).
+- Reajuste = fator de preço que mantém faturamento − tributos igual ao de hoje, com custos e folha fixos e sem crescimento. Validar se o empresário entende "mesmo lucro" assim.
+- Clientes que aproveitam crédito: novo campo (padrão 100%). Optantes do Simples Unificado e MEI não aproveitam.
+- Conferência externa (14/10/2026): no simuladordareforma.com.br, o "Atacado regional" deu o mesmo DAS (R$ 393.180/ano), o mesmo DAS reduzido do Híbrido ano a ano e o mesmo crédito aos clientes no Unificado. A diferença no Híbrido vem só das alíquotas de referência (eles usam CBS 8,4%–8,5% e IBS 18,5%; nós, 9,21% e 18,7%).

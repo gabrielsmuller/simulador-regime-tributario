@@ -19,6 +19,10 @@ const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 const centavos = (v: number) => Math.round(v * 100) / 100;
 const linha = (tributo: string, categoria: Categoria, valor: number, memoria: string): Linha => ({ tributo, categoria, valor, memoria });
 
+/** Fração do faturamento vendida a empresas que aproveitam crédito de IBS/CBS. */
+export const vendasComCredito = (e: Entrada) =>
+  e.percVendasEmpresas * Math.min(1, Math.max(0, e.percClientesComCredito ?? 1));
+
 export function criarContexto(e: Entrada, ano: Ano): Contexto {
   const g = Math.pow(1 + e.avancado.crescimentoAnual, ano - 2026);
   const fat = e.faturamentoMensal * g;
@@ -130,7 +134,7 @@ function fechar(regime: Regime, ctx: Contexto, linhas: Linha[], creditoPorReal: 
     cargaEfetiva: ctx.fat > 0 ? carga / ctx.fat : 0,
     linhas: arred,
     creditoPorReal: credito,
-    creditoClientesMes: centavos(ctx.fat * ctx.e.percVendasEmpresas * credito),
+    creditoClientesMes: centavos(ctx.fat * vendasComCredito(ctx.e) * credito),
     variacao: null,
   };
 }

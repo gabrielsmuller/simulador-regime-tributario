@@ -8,10 +8,11 @@ import type { Exemplo } from './exemplos';
 
 import { ModuloIcms } from './icms/ModuloIcms';
 import { ModuloBeneficios } from './ModuloBeneficios';
+import { CONTRATO_PADRAO, ModuloPreco, contratoValido } from './ModuloPreco';
 import { ModuloRegimes, type EtapaRegimes } from './ModuloRegimes';
 import { ModuloRelatorio } from './ModuloRelatorio';
 
-type Modulo = 'regimes' | 'st-difal' | 'beneficios' | 'relatorio';
+type Modulo = 'regimes' | 'st-difal' | 'beneficios' | 'preco' | 'relatorio';
 
 const traco = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 const Icone = ({ children }: { children: ReactNode }) => (
@@ -21,6 +22,7 @@ const ICONES: Record<Modulo | 'dados' | 'analise' | 'menu' | 'recolher', ReactNo
   regimes: <path {...traco} d="M3 15V9M8 15V5M13 15v-4M2 17h14" />,
   'st-difal': <><path {...traco} d="M2 6h10M9 3l3 3-3 3" /><path {...traco} d="M16 12H6M9 9l-3 3 3 3" /></>,
   beneficios: <path {...traco} d="M9 2l2 4.2 4.6.6-3.3 3.2.8 4.6L9 12.4 4.9 14.6l.8-4.6L2.4 6.8 7 6.2z" />,
+  preco: <><path {...traco} d="M2.5 9.5V3.5a1 1 0 0 1 1-1h6l6 6-7 7z" /><circle {...traco} cx="6.2" cy="6.2" r="1.2" /></>,
   relatorio: <><path {...traco} d="M5 2h6l3 3v11H5z" /><path {...traco} d="M8 9h4M8 12h4" /></>,
   dados: <><rect {...traco} x="3" y="3" width="12" height="12" rx="2" /><path {...traco} d="M6 7h6M6 10h4" /></>,
   analise: <path {...traco} d="M3 13l4-4 3 3 5-6" />,
@@ -30,7 +32,7 @@ const ICONES: Record<Modulo | 'dados' | 'analise' | 'menu' | 'recolher', ReactNo
 
 
 const TITULOS: Record<Modulo, string> = {
-  regimes: 'Regimes na Reforma', 'st-difal': 'ST e DIFAL', beneficios: 'Benefícios fiscais', relatorio: 'Relatório',
+  regimes: 'Regimes na Reforma', 'st-difal': 'ST e DIFAL', beneficios: 'Benefícios fiscais', preco: 'Preço e contratos', relatorio: 'Relatório',
 };
 
 /** Dentro de um iframe (ex.: página publicada) a impressão costuma ser bloqueada. */
@@ -50,6 +52,7 @@ export function App() {
   const [empresa, setEmpresa] = usePersistente('simulador-reforma:entrada:v3', entradaInicial, entradaValida);
   const [operacao, setOperacao] = usePersistente('simulador-reforma:operacao:v1', () => OPERACAO_PADRAO, operacaoValida);
   const [filtro, setFiltro] = usePersistente('simulador-reforma:beneficios:v1', () => FILTRO_PADRAO, filtroValido);
+  const [contrato, setContrato] = usePersistente('simulador-reforma:contrato:v1', () => CONTRATO_PADRAO, contratoValido);
   const valido = validar(empresa).erros.length === 0;
 
   useEffect(() => {
@@ -111,6 +114,7 @@ export function App() {
           )}
           {item('st-difal', 'ST e DIFAL', ICONES['st-difal'])}
           {item('beneficios', 'Benefícios fiscais', ICONES.beneficios)}
+          {item('preco', 'Preço e contratos', ICONES.preco)}
           <p className="nav-grupo">Documentos</p>
           {item('relatorio', 'Relatório completo', ICONES.relatorio)}
         </nav>
@@ -147,6 +151,7 @@ export function App() {
           {modulo === 'beneficios' && (
             <ModuloBeneficios empresa={empresa} op={operacao} onOp={setOperacao} filtro={filtro} onFiltro={setFiltro} />
           )}
+          {modulo === 'preco' && <ModuloPreco empresa={empresa} contrato={contrato} onContrato={setContrato} onDados={() => ir('regimes', 'dados')} />}
           {modulo === 'relatorio' && <ModuloRelatorio empresa={empresa} op={operacao} filtro={filtro} onIr={(m) => ir(m, m === 'regimes' && valido ? 'analise' : undefined)} podeImprimir={podeImprimir} />}
         </main>
 

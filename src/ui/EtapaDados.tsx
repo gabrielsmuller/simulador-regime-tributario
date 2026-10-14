@@ -124,6 +124,18 @@ export function EtapaDados({ entrada, onChange, onAvancar, onExemplo }: {
                 value={Math.round(entrada.percVendasEmpresas * 100)}
                 onChange={(ev) => set('percVendasEmpresas', Number(ev.target.value) / 100)} />
               <div className="escala"><span>Só consumidor final</span><span>Só empresas</span></div>
+              {entrada.percVendasEmpresas > 0 && !ativ.creditoVedado && (
+                <div className="subfaixa">
+                  <div className="campo-topo">
+                    <label htmlFor="f-cred">Desses clientes, quantos aproveitam crédito de IBS/CBS</label>
+                    <span className="valor-b2b">{pct(entrada.percClientesComCredito ?? 1, 0)}</span>
+                  </div>
+                  <input id="f-cred" type="range" min={0} max={100} step={5}
+                    value={Math.round((entrada.percClientesComCredito ?? 1) * 100)}
+                    onChange={(ev) => set('percClientesComCredito', Number(ev.target.value) / 100)} />
+                  <p className="ajuda">Clientes no Simples Unificado e MEIs não aproveitam. Na dúvida, deixe 100%.</p>
+                </div>
+              )}
             </div>
             {ativ.tributoLocal === 'ICMS' && (
               <div className="grade grade-2 bloco-interestadual">
