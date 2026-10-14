@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ATIVIDADES, NOMES_REGIME, NOMES_UF, VERSAO_PARAMETROS } from '../motor';
+import { NOMES_REGIME, NOMES_UF, VERSAO_PARAMETROS } from '../motor';
 import { validar } from './diagnostico';
 import {
   FILTRO_PADRAO, OPERACAO_PADRAO, entradaInicial, entradaValida, filtroValido, operacaoValida, usePersistente,
@@ -28,8 +28,6 @@ const ICONES: Record<Modulo | 'dados' | 'analise' | 'menu' | 'recolher', ReactNo
   recolher: <path {...traco} d="M11 4L6 9l5 5" />,
 };
 
-/** R$ 420 mil, R$ 1,2 mi */
-const curto = (v: number) => 'R$ ' + new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
 
 const TITULOS: Record<Modulo, string> = {
   regimes: 'Regimes na Reforma', 'st-difal': 'ST e DIFAL', beneficios: 'Benefícios fiscais', relatorio: 'Relatório',
@@ -98,19 +96,13 @@ export function App() {
           </div>
         </div>
 
-        <div className="lateral-empresa">
+        <button type="button" className="lateral-empresa" title="Dados da empresa" onClick={() => ir('regimes', 'dados')}>
           <span className="empresa-avatar" aria-hidden="true">{(empresa.nomeEmpresa?.trim() || 'E').charAt(0).toUpperCase()}</span>
-          <div className="nav-rotulo">
+          <span className="nav-rotulo">
             <b>{empresa.nomeEmpresa?.trim() || 'Sua empresa'}</b>
-            <span>{ATIVIDADES[empresa.atividade].nome} · {empresa.uf}</span>
-            <span>{regime}</span>
-            <span>{curto(empresa.faturamentoMensal)}/mês</span>
-          </div>
-          <button type="button" className="lateral-editar" title="Editar dados da empresa" onClick={() => ir('regimes', 'dados')}>
-            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3z" /></svg>
-            <span className="nav-rotulo">Editar</span>
-          </button>
-        </div>
+            <span>{regime} · {empresa.uf}</span>
+          </span>
+        </button>
 
         <nav className="lateral-nav">
           <p className="nav-grupo">Análises</p>

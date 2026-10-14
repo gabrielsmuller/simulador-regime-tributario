@@ -981,3 +981,11 @@ details.painel.outros[open] > summary { margin-bottom: 12px !important; }
 .exemplos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .exemplos-rotulo { grid-column: 1 / -1; }
 @media (max-width: 640px) { .parametro.largo { grid-column: auto; } .exemplos { display: flex; } }
+
+/* cartão da empresa enxuto e clicável */
+.lateral-empresa { width: 100%; border: 0; background: none; text-align: left; padding: 8px; gap: 10px; border-radius: 10px; color: inherit; transition: background .15s; }
+.lateral-empresa:hover { background: rgb(255 255 255 / .06); }
+.lateral-empresa .nav-rotulo { display: grid; min-width: 0; }
+.lateral-empresa .nav-rotulo span { font-size: 12px; color: var(--lateral-fraco); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recolhido .lateral-empresa { padding: 6px 0; }
+@media (max-width: 1024px) { .recolhido .lateral-empresa { grid-template-columns: 36px minmax(0, 1fr); justify-items: stretch; padding: 8px; background: none; } }
