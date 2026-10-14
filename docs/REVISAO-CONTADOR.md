@@ -67,7 +67,7 @@ Também a validar:
 - Valores em `number` com arredondamento por linha (estimativa). Para laudo formal, migrar para decimal.
 - Os dados ficam só no navegador do usuário (localStorage). Não há cadastro nem servidor.
 - Textos de recomendação são automáticos e determinísticos: revisar o tom e a responsabilidade (termo de uso).
-- Prazo de opção entre Simples Unificado e Híbrido: confirmar o calendário vigente. Temos 30/10/2026 (Res. CGSN 194/2026, prorrogação) para vigorar em jan.–jun./2027; o simuladorreforma.com.br cita janelas em setembro e março (art. 40-D da Res. CGSN 140/2018, redação da 190/2026). Hoje o simulador não exibe prazo; só exibir depois de confirmado.
+- Prazo de opção entre Simples Unificado e Híbrido: confirmar o calendário vigente. Temos 30/10/2026 (Res. CGSN 194/2026, prorrogação) para vigorar em jan.–jun./2027; o simuladorreforma.com.br cita janelas em setembro e março (art. 40-D da Res. CGSN 140/2018, redação da 190/2026). Hoje a aba "Pontos de atenção" mostra "Prazo de opção até 30/10/2026" (`src/ui/diagnostico.ts`): confirmar ou retirar.
 
 ## 6. Preço e contratos (`src/motor/preco.ts`)
 
