@@ -646,3 +646,21 @@ fieldset.campo legend { margin-bottom: 6px; padding: 0; }
   .sintese, .beneficio-economia.tem, .uf-tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .relatorio .painel-acao { display: none; }
 }
+
+/* ---------- impressão do relatório (A4) ---------- */
+@page { size: A4; margin: 12mm; }
+@media print {
+  body { font-size: 12.5px; }
+  .etapa { gap: 12px; }
+  .sintese { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sintese-item { border-top: 0 !important; border-left: 1px solid rgb(255 255 255 / .12); padding: 14px 16px; }
+  .sintese-item:first-child { border-left: 0; }
+  .sintese-item b { font-size: 14px; }
+  .grade-analise, .grade-analise.igual { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .painel-topo { padding: 10px 14px; }
+  .painel > :not(.painel-topo) { margin: 10px 14px; }
+  .painel > :last-child { margin-bottom: 14px; }
+  .etapa-titulo h1 { font-size: 22px; }
+  .tabela th, .tabela td { padding: 6px 10px; }
+  .enq-lista div { padding: 5px 0; }
+}

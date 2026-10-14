@@ -121,6 +121,9 @@ export function ModuloRelatorio({ empresa, op, filtro, onIr, podeImprimir }: {
             </tbody>
           </table>
         </div>
+        {REGIMES.some((r) => !a27.regimes[r].elegivel) && (
+          <p className="nota">— Indisponível: {REGIMES.filter((r) => !a27.regimes[r].elegivel).map((r) => a27.regimes[r].motivo).filter((v, i, l) => l.indexOf(v) === i).join('; ')}.</p>
+        )}
       </Painel>
 
       <div className="grade-analise igual">

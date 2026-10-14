@@ -60,7 +60,9 @@ export function pontosDeAtencao(e: Entrada, r: Resultado): Mensagem[] {
   if (difal > 0 && e.ufDestinoPrincipal) {
     m.push({
       tipo: 'atencao', titulo: `DIFAL de ${brl(difal)}/mês para ${e.ufDestinoPrincipal}`,
-      texto: `É ${pct(difal / atual.carga, 0)} da sua carga em 2027. No Simples ele não é cobrado; veja os destinos e benefícios nos módulos de ST e DIFAL e de Benefícios.`,
+      texto: `É ${pct(difal / atual.carga, 0)} da sua carga em 2027.` +
+        (enq.simplesElegivel ? ' No Simples ele não é cobrado.' : '') +
+        ' Veja os destinos e benefícios nos módulos de ST e DIFAL e de Benefícios.',
     });
   }
   if (ativ.creditoVedado) {
