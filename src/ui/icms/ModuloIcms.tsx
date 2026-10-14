@@ -76,8 +76,10 @@ export function ModuloIcms({ empresa, op, onOp }: { empresa: Entrada; op: Operac
             <span>Valor da venda</span>
             <CampoNumero id="i-valor" prefixo="R$" casas={0} valor={op.valor} onChange={(v) => set('valor', v)} />
           </label>
-          <button type="button" className={`botao fantasma pequeno mais ${maisOpcoes ? 'on' : ''}`} aria-expanded={maisOpcoes} onClick={() => setMaisOpcoes(!maisOpcoes)}>
-            {maisOpcoes ? 'Menos opções' : 'Mais opções'}
+        </div>
+        <div className="parametros-rodape">
+          <button type="button" className="link" aria-expanded={maisOpcoes} onClick={() => setMaisOpcoes(!maisOpcoes)}>
+            {maisOpcoes ? 'Ocultar opções avançadas' : 'Opções avançadas: método do DIFAL, alíquota interna e FCP do destino'}
           </button>
         </div>
         {maisOpcoes && (
