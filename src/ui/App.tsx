@@ -1,42 +1,36 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ATIVIDADES, simular, type Entrada } from '../motor';
-import { validar } from './diagnostico';
-import { EtapaAnalise } from './EtapaAnalise';
-import { EtapaDados } from './EtapaDados';
-import { EXEMPLOS } from './exemplos';
+import { useEffect, useState } from 'react';
+import { ModuloIcms } from './icms/ModuloIcms';
+import { ModuloBeneficios } from './ModuloBeneficios';
+import { ModuloRegimes } from './ModuloRegimes';
 
-const CHAVE = 'simulador-reforma:entrada:v3';
-type Etapa = 'dados' | 'analise';
+type Modulo = 'regimes' | 'st-difal' | 'beneficios';
+
+const MODULOS: { id: Modulo; rotulo: string; sub: string; emBreve?: boolean }[] = [
+  { id: 'regimes', rotulo: 'Regimes na Reforma', sub: 'Simples, Presumido e Real até 2033' },
+  { id: 'st-difal', rotulo: 'ST e DIFAL', sub: 'ICMS nas vendas para outros estados' },
+  { id: 'beneficios', rotulo: 'Benefícios fiscais', sub: 'Incentivos estaduais', emBreve: true },
+];
 
 /** Dentro de um iframe (ex.: página publicada) a impressão costuma ser bloqueada. */
 const podeImprimir = (() => { try { return window.self === window.top; } catch { return false; } })();
 
-const EXEMPLO: Entrada = EXEMPLOS[0].entrada;
-
-function carregar(): Entrada {
-  try {
-    const salvo = localStorage.getItem(CHAVE);
-    if (salvo) {
-      const e = JSON.parse(salvo) as Entrada;
-      if (e && e.avancado && e.atividade in ATIVIDADES) return e;
-    }
-  } catch { /* sem armazenamento: usa o exemplo */ }
-  return EXEMPLO;
-}
+const lerHash = (): Modulo => {
+  const h = window.location.hash.replace('#', '');
+  return MODULOS.some((m) => m.id === h) ? (h as Modulo) : 'regimes';
+};
 
 export function App() {
-  const [entrada, setEntrada] = useState<Entrada>(carregar);
-  const [etapa, setEtapa] = useState<Etapa>('dados');
-  useEffect(() => { try { localStorage.setItem(CHAVE, JSON.stringify(entrada)); } catch { /* ignora */ } }, [entrada]);
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [etapa]);
-
-  const valido = validar(entrada).erros.length === 0;
-  const resultado = useMemo(() => (valido ? simular(entrada) : null), [entrada, valido]);
-
-  const passos: { id: Etapa; rotulo: string }[] = [
-    { id: 'dados', rotulo: 'Dados da empresa' },
-    { id: 'analise', rotulo: 'Análise' },
-  ];
+  const [modulo, setModulo] = useState<Modulo>(lerHash);
+  useEffect(() => {
+    const ouvir = () => setModulo(lerHash());
+    window.addEventListener('hashchange', ouvir);
+    return () => window.removeEventListener('hashchange', ouvir);
+  }, []);
+  const ir = (m: Modulo) => {
+    setModulo(m);
+    try { history.replaceState(null, '', `#${m}`); } catch { /* ignora */ }
+    window.scrollTo({ top: 0 });
+  };
 
   return (
     <div className="app">
@@ -51,32 +45,29 @@ export function App() {
             </svg>
             <div>
               <span className="marca-nome">Simulador Tributário</span>
-              <span className="marca-sub">Reforma Tributária · 2027–2033</span>
+              <span className="marca-sub">Análise tributária na Reforma</span>
             </div>
           </div>
-          <nav className="passos" aria-label="Etapas">
-            {passos.map((p, i) => (
-              <button key={p.id} type="button" className={`passo ${etapa === p.id ? 'on' : ''}`}
-                aria-current={etapa === p.id ? 'step' : undefined}
-                disabled={p.id === 'analise' && !valido} onClick={() => setEtapa(p.id)}>
-                <span className="passo-num">{i + 1}</span>{p.rotulo}
+          <nav className="modulos" aria-label="Módulos">
+            {MODULOS.map((m) => (
+              <button key={m.id} type="button" className={`modulo ${modulo === m.id ? 'on' : ''}`}
+                aria-current={modulo === m.id ? 'page' : undefined} onClick={() => ir(m.id)}>
+                {m.rotulo}
+                {m.emBreve && <span className="tag">em breve</span>}
               </button>
             ))}
           </nav>
-          <span className="base-legal">LC 214/2025</span>
         </div>
       </header>
 
       <main className="conteudo">
-        {etapa === 'dados' || !resultado ? (
-          <EtapaDados entrada={entrada} onChange={setEntrada} onAvancar={() => setEtapa('analise')} />
-        ) : (
-          <EtapaAnalise entrada={entrada} resultado={resultado} onEditar={() => setEtapa('dados')} podeImprimir={podeImprimir} />
-        )}
+        {modulo === 'regimes' && <ModuloRegimes podeImprimir={podeImprimir} />}
+        {modulo === 'st-difal' && <ModuloIcms />}
+        {modulo === 'beneficios' && <ModuloBeneficios onIr={() => ir('st-difal')} />}
       </main>
 
       <footer className="rodape">
-        Estimativa com base na LC 214/2025 e nas premissas informadas. Não substitui a análise de um contador.
+        Estimativas com base na legislação vigente e nas premissas informadas. Não substituem a análise de um contador.
       </footer>
     </div>
   );

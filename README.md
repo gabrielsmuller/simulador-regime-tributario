@@ -1,6 +1,10 @@
 # Simulador da Reforma Tributária
 
-Compara, ano a ano de 2027 a 2033, quanto a empresa pagaria de imposto em **Simples Unificado, Simples Híbrido, Lucro Presumido e Lucro Real**, com recomendação, ponto de virada e crédito entregue a clientes PJ. Público: o empresário final.
+Análise tributária para o empresário, em módulos:
+
+- **Regimes na Reforma**: compara, ano a ano de 2027 a 2033, o imposto no Simples Unificado, Simples Híbrido, Lucro Presumido e Lucro Real, com recomendação, ponto de virada e crédito entregue a clientes PJ.
+- **ST e DIFAL**: calcula o ICMS de uma venda para cada um dos 27 estados (alíquota interestadual, DIFAL e substituição tributária) e mostra em qual destino a carga é menor.
+- **Benefícios fiscais**: em desenvolvimento.
 
 ## Rodar
 
@@ -47,9 +51,15 @@ src/
 │  ├─ parametros.ts       # TODA regra numérica: transição, anexos do Simples, ICMS por UF, atividades
 │  ├─ regimes.ts          # cálculo dos 4 regimes + memória de cálculo
 │  ├─ simular.ts          # orquestra os 7 anos, menor carga, viradas, recomendação
-│  └─ motor.test.ts
+│  ├─ icms.ts             # ICMS interestadual: alíquotas 4/7/12%, DIFAL (base dupla/única), ST e MVA ajustada
+│  ├─ motor.test.ts
+│  └─ icms.test.ts
 └─ ui/
-   ├─ App.tsx             # barra superior, etapas e estado salvo no navegador
+   ├─ App.tsx             # barra superior e navegação entre módulos
+   ├─ ModuloRegimes.tsx   # módulo de regimes: etapas e estado salvo no navegador
+   ├─ ModuloBeneficios.tsx# prévia do buscador de benefícios
+   ├─ icms/ModuloIcms.tsx # módulo de ST e DIFAL
+   ├─ icms/MapaBrasil.tsx # mapa de blocos dos 27 estados
    ├─ EtapaDados.tsx      # etapa 1: atividade, regime, números, premissas + enquadramento
    ├─ EtapaAnalise.tsx    # etapa 2: resumo, comparativo, tabelas, crédito, memória, base legal
    ├─ graficos.tsx        # evolução (linhas com tooltip) e composição por tributo
