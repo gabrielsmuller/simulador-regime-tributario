@@ -4,7 +4,11 @@ Análise tributária para o empresário, em módulos:
 
 - **Regimes na Reforma**: compara, ano a ano de 2027 a 2033, o imposto no Simples Unificado, Simples Híbrido, Lucro Presumido e Lucro Real, com recomendação, ponto de virada e crédito entregue a clientes PJ.
 - **ST e DIFAL**: calcula o ICMS de uma venda para cada um dos 27 estados (alíquota interestadual, DIFAL e substituição tributária) e mostra em qual destino a carga é menor.
-- **Benefícios fiscais**: em desenvolvimento.
+- **Benefícios fiscais**: catálogo de incentivos estaduais de ICMS (SC, ES, MG, PE, GO, PR) filtrado pelo perfil da empresa, com economia estimada.
+- **Relatório**: junta regime, ICMS interestadual, benefícios, pontos de atenção e o que validar com o contador numa página para imprimir.
+
+O cadastro da empresa é único: estado, regime e vendas para outros estados valem para todos os módulos.
+Pontos que dependem de validação técnica: [docs/REVISAO-CONTADOR.md](docs/REVISAO-CONTADOR.md).
 
 ## Rodar
 
@@ -52,12 +56,16 @@ src/
 │  ├─ regimes.ts          # cálculo dos 4 regimes + memória de cálculo
 │  ├─ simular.ts          # orquestra os 7 anos, menor carga, viradas, recomendação
 │  ├─ icms.ts             # ICMS interestadual: alíquotas 4/7/12%, DIFAL (base dupla/única), ST e MVA ajustada
+│  ├─ beneficios.ts       # catálogo de benefícios estaduais e cálculo da economia
 │  ├─ motor.test.ts
-│  └─ icms.test.ts
+│  ├─ icms.test.ts
+│  └─ beneficios.test.ts
 └─ ui/
-   ├─ App.tsx             # barra superior e navegação entre módulos
-   ├─ ModuloRegimes.tsx   # módulo de regimes: etapas e estado salvo no navegador
-   ├─ ModuloBeneficios.tsx# prévia do buscador de benefícios
+   ├─ App.tsx             # barra superior, módulos e estado compartilhado
+   ├─ estado.ts           # cadastro da empresa e operação salvos no navegador
+   ├─ ModuloRegimes.tsx   # módulo de regimes (etapas de dados e análise)
+   ├─ ModuloBeneficios.tsx# buscador de benefícios fiscais
+   ├─ ModuloRelatorio.tsx # relatório consolidado para imprimir
    ├─ icms/ModuloIcms.tsx # módulo de ST e DIFAL
    ├─ icms/MapaBrasil.tsx # mapa de blocos dos 27 estados
    ├─ EtapaDados.tsx      # etapa 1: atividade, regime, números, premissas + enquadramento

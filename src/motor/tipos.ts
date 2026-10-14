@@ -62,6 +62,10 @@ export interface Entrada {
   margemLucro: number;
   /** fração das vendas feitas para empresas (B2B) */
   percVendasEmpresas: number;
+  /** fração do faturamento vendida a consumidor final de outros estados (gera DIFAL fora do Simples) */
+  percVendasOutrosEstados?: number;
+  /** principal estado de destino dessas vendas */
+  ufDestinoPrincipal?: string;
   avancado: Avancado;
 }
 

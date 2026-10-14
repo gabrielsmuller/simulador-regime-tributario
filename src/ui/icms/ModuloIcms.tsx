@@ -1,18 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
-  ICMS_INTERNA, FCP_UF, NOMES_UF, UFS, calcularIcms, rankingDestinos, transicaoIcms,
-  type EntradaIcms, type QuemPaga, type TipoCliente,
+  ICMS_INTERNA, ICMS_UF, FCP_UF, NOMES_UF, UFS, calcularIcms, rankingDestinos, transicaoIcms,
+  type Entrada, type QuemPaga, type TipoCliente,
 } from '../../motor';
+import { OPERACAO_PADRAO, icmsDaEmpresa, type OperacaoIcms } from '../estado';
 import { Campo, CampoNumero, Icone, Painel, Segmentado } from '../campos';
 import { brl, pct } from '../formato';
 import { MapaBrasil } from './MapaBrasil';
-
-const CHAVE = 'simulador-reforma:icms:v1';
-
-const PADRAO: EntradaIcms = {
-  ufOrigem: 'SP', ufDestino: 'BA', vendedorSimples: false, tipoCliente: 'nao_contribuinte',
-  importado: false, temSt: false, mvaOriginal: 0.4, valor: 10_000, metodoDifal: 'dupla', difalNoSimples: false,
-};
 
 const CLIENTES: { valor: TipoCliente; rotulo: string; desc: string }[] = [
   { valor: 'nao_contribuinte', rotulo: 'Consumidor final', desc: 'Pessoa física ou empresa sem inscrição estadual (ex.: e-commerce). Gera DIFAL.' },
@@ -22,23 +16,19 @@ const CLIENTES: { valor: TipoCliente; rotulo: string; desc: string }[] = [
 
 const QUEM: Record<QuemPaga, string> = { vendedor: 'Você', comprador: 'Comprador', das: 'No DAS' };
 
-function carregar(): EntradaIcms {
-  try {
-    const s = localStorage.getItem(CHAVE);
-    if (s) { const e = JSON.parse(s) as EntradaIcms; if (e && e.ufOrigem in ICMS_INTERNA) return { ...PADRAO, ...e }; }
-  } catch { /* usa o padrão */ }
-  return PADRAO;
-}
+export function ModuloIcms({ empresa, onEmpresa, op, onOp }: {
+  empresa: Entrada; onEmpresa: (e: Entrada) => void; op: OperacaoIcms; onOp: (o: OperacaoIcms) => void;
+}) {
+  const e = icmsDaEmpresa(empresa, op);
+  const set = <K extends keyof OperacaoIcms>(k: K, v: OperacaoIcms[K]) => onOp({ ...op, [k]: v });
+  const escolherDestino = (uf: string) => onOp({ ...op, ufDestino: uf, internaDestino: undefined, fcpDestino: undefined });
+  const mudarOrigem = (uf: string) => onEmpresa({ ...empresa, uf, avancado: { ...empresa.avancado, aliqIcms: ICMS_UF[uf] } });
+  const mudarRegime = (simples: boolean) => onEmpresa({ ...empresa, regimeAtual: simples ? 'SN_UNIFICADO' : (empresa.regimeAtual.startsWith('SN_') ? 'PRESUMIDO' : empresa.regimeAtual) });
 
-export function ModuloIcms() {
-  const [e, setE] = useState<EntradaIcms>(carregar);
-  useEffect(() => { try { localStorage.setItem(CHAVE, JSON.stringify(e)); } catch { /* ignora */ } }, [e]);
-  const set = <K extends keyof EntradaIcms>(k: K, v: EntradaIcms[K]) => setE((x) => ({ ...x, [k]: v }));
-  const escolherDestino = (uf: string) => setE((x) => ({ ...x, ufDestino: uf, internaDestino: undefined, fcpDestino: undefined }));
-
-  const r = useMemo(() => calcularIcms(e), [e]);
-  const ranking = useMemo(() => rankingDestinos(e), [e]);
-  const transicao = useMemo(() => transicaoIcms(e), [e]);
+  const chave = JSON.stringify(e);
+  const r = useMemo(() => calcularIcms(e), [chave]);
+  const ranking = useMemo(() => rankingDestinos(e), [chave]);
+  const transicao = useMemo(() => transicaoIcms(e), [chave]);
   const posicao = ranking.findIndex((x) => x.uf === e.ufDestino) + 1;
   const melhores = ranking.slice(0, 5);
   const pior = ranking[ranking.length - 1];
@@ -56,15 +46,16 @@ export function ModuloIcms() {
         <aside className="icms-form">
           <section className="enq-cartao">
             <h2>Dados da operação</h2>
+            <p className="ajuda">Estado e regime vêm do cadastro da empresa e valem para todos os módulos.</p>
             <Campo id="i-origem" rotulo="Estado de onde você vende">
-              <select id="i-origem" value={e.ufOrigem} onChange={(ev) => set('ufOrigem', ev.target.value)}>
+              <select id="i-origem" value={e.ufOrigem} onChange={(ev) => mudarOrigem(ev.target.value)}>
                 {UFS.map((uf) => <option key={uf} value={uf}>{uf} · {NOMES_UF[uf]}</option>)}
               </select>
             </Campo>
             <div className="campo">
               <span className="rotulo">Regime da sua empresa</span>
               <Segmentado rotulo="Regime da sua empresa" valor={e.vendedorSimples ? 's' : 'n'}
-                onChange={(v) => set('vendedorSimples', v === 's')}
+                onChange={(v) => mudarRegime(v === 's')}
                 opcoes={[{ valor: 's', rotulo: 'Simples Nacional' }, { valor: 'n', rotulo: 'Presumido ou Real' }]} />
             </div>
             <fieldset className="campo">
@@ -118,7 +109,7 @@ export function ModuloIcms() {
                   <CampoNumero id="i-fcp" sufixo="%" percentual max={4} valor={e.fcpDestino ?? FCP_UF[e.ufDestino]} onChange={(v) => set('fcpDestino', v)} />
                 </Campo>
               </div>
-              <button type="button" className="botao fantasma pequeno" onClick={() => setE(PADRAO)}>Restaurar exemplo</button>
+              <button type="button" className="botao fantasma pequeno" onClick={() => onOp(OPERACAO_PADRAO)}>Restaurar operação padrão</button>
             </details>
           </section>
         </aside>

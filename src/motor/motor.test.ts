@@ -196,4 +196,18 @@ describe('regras específicas', () => {
     expect(r.recomendacao.titulo).toContain('permaneça no Simples Unificado');
     expect(r.recomendacao.texto[0]).toMatch(/^No Híbrido, o DAS cai/);
   });
+
+  it('vendas a consumidor final de outro estado: DIFAL no Presumido, nada a mais no Simples', () => {
+    // metade do faturamento (R$ 25.000) vendida a consumidor final na BA, saindo de SP
+    const e = ref({ percVendasOutrosEstados: 0.5, ufDestinoPrincipal: 'BA' });
+    const a = ano(e, 2027);
+    // ICMS: 25.000 × 18% + 25.000 × 7% − 30.000 × 18% = 850
+    expect(valor(a.regimes.PRESUMIDO, 'ICMS')).toBeCloseTo(850, 2);
+    // DIFAL base dupla: 25.000 × (0,93 ÷ 0,795 × 20,5% − 7%) = 4.245,28
+    expect(valor(a.regimes.PRESUMIDO, 'DIFAL')).toBeCloseTo(4245.28, 1);
+    // ICMS e DIFAL saem da base do IBS/CBS: (50.000 − 5.095,28) × 9,11% − 1.913,10
+    expect(valor(a.regimes.PRESUMIDO, 'CBS')).toBeCloseTo(2177.72, 1);
+    expect(a.regimes.SN_UNIFICADO.carga).toBeCloseTo(3595, 2);
+    expect(valor(a.regimes.SN_UNIFICADO, 'DIFAL')).toBe(0);
+  });
 });

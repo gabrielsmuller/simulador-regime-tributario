@@ -1,28 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ATIVIDADES, simular, type Entrada } from '../motor';
+import { simular, type Entrada } from '../motor';
 import { validar } from './diagnostico';
 import { EtapaAnalise } from './EtapaAnalise';
 import { EtapaDados } from './EtapaDados';
-import { EXEMPLOS } from './exemplos';
 
-const CHAVE = 'simulador-reforma:entrada:v3';
 type Etapa = 'dados' | 'analise';
 
-function carregar(): Entrada {
-  try {
-    const salvo = localStorage.getItem(CHAVE);
-    if (salvo) {
-      const e = JSON.parse(salvo) as Entrada;
-      if (e && e.avancado && e.atividade in ATIVIDADES) return e;
-    }
-  } catch { /* sem armazenamento: usa o exemplo */ }
-  return EXEMPLOS[0].entrada;
-}
-
-export function ModuloRegimes({ podeImprimir }: { podeImprimir: boolean }) {
-  const [entrada, setEntrada] = useState<Entrada>(carregar);
+export function ModuloRegimes({ entrada, onChange, podeImprimir }: {
+  entrada: Entrada; onChange: (e: Entrada) => void; podeImprimir: boolean;
+}) {
   const [etapa, setEtapa] = useState<Etapa>('dados');
-  useEffect(() => { try { localStorage.setItem(CHAVE, JSON.stringify(entrada)); } catch { /* ignora */ } }, [entrada]);
   useEffect(() => { window.scrollTo({ top: 0 }); }, [etapa]);
 
   const valido = validar(entrada).erros.length === 0;
@@ -44,7 +31,7 @@ export function ModuloRegimes({ podeImprimir }: { podeImprimir: boolean }) {
         ))}
       </nav>
       {etapa === 'dados' || !resultado ? (
-        <EtapaDados entrada={entrada} onChange={setEntrada} onAvancar={() => setEtapa('analise')} />
+        <EtapaDados entrada={entrada} onChange={onChange} onAvancar={() => setEtapa('analise')} />
       ) : (
         <EtapaAnalise entrada={entrada} resultado={resultado} onEditar={() => setEtapa('dados')} podeImprimir={podeImprimir} />
       )}

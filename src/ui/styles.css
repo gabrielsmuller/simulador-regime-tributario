@@ -573,3 +573,76 @@ fieldset.campo legend { margin-bottom: 6px; padding: 0; }
 
 .tabela.densa th, .tabela.densa td { padding: 9px 8px; }
 .tabela.densa th:first-child, .tabela.densa td:first-child { padding-left: 12px; }
+
+.bloco-interestadual { margin-top: 4px; padding-top: 16px; border-top: 1px dashed var(--line); }
+
+/* ---------- benefícios ---------- */
+.modulo.destaque:not(.on) { color: var(--brand-2); }
+.uf-tag {
+  flex: none; display: inline-grid; place-items: center; min-width: 32px; height: 26px; padding: 0 6px;
+  border-radius: 6px; background: var(--brand); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .03em;
+}
+.beneficios { display: grid; gap: 14px; }
+.beneficio { border: 1px solid var(--line-2); border-radius: 10px; padding: 16px 18px; display: grid; gap: 12px; background: var(--surface); }
+.beneficio-topo { display: flex; gap: 12px; align-items: flex-start; }
+.beneficio-topo > div { flex: 1; min-width: 0; }
+.beneficio-topo h3 { font-size: 15px; }
+.beneficio-topo p { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+.beneficio-topo .selo { background: var(--warn-soft); color: var(--warn); white-space: nowrap; }
+.beneficio-op { font-size: 13.5px; color: var(--ink-2); }
+.beneficio-numeros { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; }
+.beneficio-numeros > div { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; align-content: start; }
+.beneficio-numeros p { font-size: 13px; color: var(--ink); }
+.beneficio-economia b { font-size: 20px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.beneficio-economia b small { font-size: 12px; color: var(--ink-3); font-weight: 500; margin-left: 2px; }
+.beneficio-economia span { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.beneficio-economia.tem { background: var(--good-soft); }
+.beneficio-economia.tem b { color: var(--good); }
+.beneficio-alertas { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.beneficio-alertas li { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--warn); }
+.beneficio-alertas .icone { margin-top: 1px; }
+.beneficio-detalhes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.beneficio-detalhes h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); margin: 0 0 6px; font-weight: 600; }
+.beneficio-detalhes ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13px; color: var(--ink-2); }
+.beneficio-rodape { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 10px; }
+.beneficio-rodape b { color: var(--ink-2); font-weight: 600; }
+.beneficio-rodape a { color: var(--brand-2); font-weight: 500; text-decoration: none; }
+.beneficio-rodape a:hover { text-decoration: underline; }
+.outros-beneficios { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.outros-beneficios li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; align-items: center; font-size: 13px; }
+.outros-beneficios li span:last-child { grid-column: 2; color: var(--ink-3); font-size: 12.5px; }
+
+/* ---------- relatório ---------- */
+.sintese { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--brand); border-radius: var(--raio); overflow: hidden; }
+.sintese-item { display: flex; gap: 14px; padding: 20px 22px; color: #fff; border-left: 1px solid rgb(255 255 255 / .12); }
+.sintese-item:first-child { border-left: 0; }
+.sintese-item > div { display: grid; gap: 4px; min-width: 0; }
+.sintese-item .kpi-rotulo { color: #a9c7ea; }
+.sintese-item b { font-size: 16px; font-weight: 600; line-height: 1.3; }
+.sintese-item span:last-child { font-size: 12.5px; color: #c8d9ee; }
+.sintese-num {
+  flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  background: rgb(255 255 255 / .14); font-size: 13px; font-weight: 600;
+}
+.lista-texto { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); }
+.ranking-lista.compacta li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 8px; font-size: 13px; }
+.lista-beneficios { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.lista-beneficios li { display: flex; gap: 10px; align-items: flex-start; }
+.lista-beneficios li div { display: grid; gap: 2px; font-size: 13px; }
+.lista-beneficios li span:not(.uf-tag) { color: var(--ink-2); font-size: 12.5px; }
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.checklist li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--ink-2); }
+.caixa { flex: none; width: 15px; height: 15px; border: 1.5px solid var(--line-2); border-radius: 3px; margin-top: 2px; }
+.vazio-rel { padding: 24px; display: grid; gap: 12px; justify-items: start; }
+.painel .kpi-rotulo + .ranking-lista { margin-top: 6px; }
+
+@media (max-width: 960px) {
+  .sintese { grid-template-columns: minmax(0, 1fr); }
+  .sintese-item { border-left: 0; border-top: 1px solid rgb(255 255 255 / .12); }
+  .sintese-item:first-child { border-top: 0; }
+  .beneficio-numeros, .beneficio-detalhes { grid-template-columns: minmax(0, 1fr); }
+}
+@media print {
+  .sintese, .beneficio-economia.tem, .uf-tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .relatorio .painel-acao { display: none; }
+}

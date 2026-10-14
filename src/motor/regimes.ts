@@ -1,3 +1,4 @@
+import { aliquotaInterestadual, calcularIcms } from './icms';
 import { ATIVIDADES, LIMITES, TRANSICAO, tabelaSimples, type FaixaSimples } from './parametros';
 import type { AnexoSimples, Ano, Atividade, Categoria, Enquadramento, Entrada, Linha, Regime, ResultadoRegime } from './tipos';
 
@@ -66,19 +67,43 @@ function ivaRegular(ctx: Contexto, incluir: { cbs: boolean; ibs: boolean }, dedu
   return linhas;
 }
 
-/** ICMS ou ISS fora do Simples, reduzidos ano a ano até a extinção em 2033. */
-function tributoLocal(ctx: Contexto): Linha {
+/**
+ * ICMS ou ISS fora do DAS, reduzidos ano a ano até a extinção em 2033.
+ * Vendas a consumidor final de outros estados saem com a alíquota interestadual
+ * e geram DIFAL para o destino (EC 87/2015; LC 190/2022), exceto no Simples.
+ */
+function tributosLocais(ctx: Contexto, semDifal: boolean): Linha[] {
   const fator = TRANSICAO[ctx.ano].fatorLocal;
   const nome = ctx.ativ.tributoLocal;
-  if (fator === 0) return linha(nome, 'LOCAL', 0, `${nome} extinto em 2033 e substituído pelo IBS`);
+  if (fator === 0) return [linha(nome, 'LOCAL', 0, `${nome} extinto em 2033 e substituído pelo IBS`)];
   const reducao = fator < 1 ? ` × ${pct(fator, 0)} da alíquota (transição)` : '';
-  if (nome === 'ICMS') {
-    const base = Math.max(0, ctx.fat - ctx.compras);
-    return linha('ICMS', 'LOCAL', base * ctx.e.avancado.aliqIcms * fator,
-      `(${brl(ctx.fat)} de vendas − ${brl(ctx.compras)} de compras) × ${pct(ctx.e.avancado.aliqIcms)}${reducao}`);
+  if (nome === 'ISS') {
+    return [linha('ISS', 'LOCAL', ctx.fat * ctx.e.avancado.aliqIss * fator, `${brl(ctx.fat)} × ${pct(ctx.e.avancado.aliqIss)}${reducao}`)];
   }
-  return linha('ISS', 'LOCAL', ctx.fat * ctx.e.avancado.aliqIss * fator,
-    `${brl(ctx.fat)} × ${pct(ctx.e.avancado.aliqIss)}${reducao}`);
+  const interna = ctx.e.avancado.aliqIcms * fator;
+  const destino = ctx.e.ufDestinoPrincipal;
+  const p = destino && destino !== ctx.e.uf ? Math.min(1, Math.max(0, ctx.e.percVendasOutrosEstados ?? 0)) : 0;
+  if (p === 0) {
+    const base = Math.max(0, ctx.fat - ctx.compras);
+    return [linha('ICMS', 'LOCAL', base * interna,
+      `(${brl(ctx.fat)} de vendas − ${brl(ctx.compras)} de compras) × ${pct(ctx.e.avancado.aliqIcms)}${reducao}`)];
+  }
+  const inter = aliquotaInterestadual(ctx.e.uf, destino!, false) * fator;
+  const vendasFora = ctx.fat * p;
+  const debito = (ctx.fat - vendasFora) * interna + vendasFora * inter;
+  const credito = ctx.compras * interna;
+  const linhas = [linha('ICMS', 'LOCAL', Math.max(0, debito - credito),
+    `Débito: ${brl(ctx.fat - vendasFora)} no estado × ${pct(interna)} + ${brl(vendasFora)} para ${destino} × ${pct(inter)}; ` +
+    `crédito: ${brl(ctx.compras)} de compras × ${pct(interna)}${fator < 1 ? ' (alíquotas já reduzidas pela transição)' : ''}`)];
+  if (semDifal) return linhas;
+  // DIFAL sobre as vendas ao destino (base dupla), já com o fator da transição
+  const difal = calcularIcms({
+    ufOrigem: ctx.e.uf, ufDestino: destino!, vendedorSimples: false, tipoCliente: 'nao_contribuinte', importado: false,
+    temSt: false, mvaOriginal: 0, valor: vendasFora, metodoDifal: 'dupla', difalNoSimples: false,
+  }, destino!, fator).difal;
+  linhas.push(linha('DIFAL', 'LOCAL', difal,
+    `${brl(vendasFora)} vendidos a consumidor final em ${destino}: diferença até a alíquota interna do destino, base dupla (${pct(vendasFora ? difal / vendasFora : 0)} da venda)`));
+  return linhas;
 }
 
 function cpp(ctx: Contexto, aliq: number, rotulo: string): Linha {
@@ -166,26 +191,28 @@ function simples(ctx: Contexto, hibrido: boolean): ResultadoRegime {
 
   const linhas: Linha[] = [];
   let creditoPorReal: number;
-  const local = acimaSublimite ? tributoLocal(ctx) : null;
+  // Optante do Simples não recolhe DIFAL na venda a não contribuinte (STF, ADI 5464)
+  const locais = acimaSublimite ? tributosLocais(ctx, true) : null;
+  const valorLocal = locais ? locais.reduce((t, l) => t + l.valor, 0) : 0;
 
   if (!hibrido) {
     linhas.push(linha('DAS', 'DAS', das,
       `${cabecalho}. Partilha: CBS ${pct(fatiaCbs)}, IBS ${pct(fatiaIbs)}` +
       `${fatiaLocal ? `, ${ctx.ativ.tributoLocal} ${pct(fatiaLocal)}` : ''} do DAS`));
     creditoPorReal = (fatiaCbs + fatiaIbs) * efetiva;
-    if (local) {
-      linhas.push(...ivaRegular(ctx, { cbs: false, ibs: true }, local.valor));
+    if (locais) {
+      linhas.push(...ivaRegular(ctx, { cbs: false, ibs: true }, valorLocal));
       creditoPorReal += ibs * (1 - red);
     }
   } else {
     const fora = fatiaCbs + fatiaIbs;
     linhas.push(linha('DAS reduzido', 'DAS', das * (1 - fora),
       `${cabecalho}. Sem as fatias de CBS e IBS (${pct(fora)} do DAS), que passam a ser apuradas por fora`));
-    linhas.push(...ivaRegular(ctx, { cbs: true, ibs: true }, local?.valor ?? 0));
+    linhas.push(...ivaRegular(ctx, { cbs: true, ibs: true }, valorLocal));
     creditoPorReal = (cbs + ibs) * (1 - red);
   }
 
-  if (local) linhas.push(local);
+  if (locais) linhas.push(...locais);
   if (anexo === 'IV') linhas.push(cpp(ctx, LIMITES.cppAnexoIV, 'no Anexo IV o INSS patronal é pago fora do DAS'));
 
   return fechar(regime, ctx, linhas, creditoPorReal);
@@ -199,10 +226,10 @@ export const simplesHibrido = (ctx: Contexto) => simples(ctx, true);
 // ---------------------------------------------------------------------------
 
 function tributosConsumoEFolha(ctx: Contexto): Linha[] {
-  const local = tributoLocal(ctx);
+  const locais = tributosLocais(ctx, false);
   return [
-    ...ivaRegular(ctx, { cbs: true, ibs: true }, local.valor),
-    local,
+    ...ivaRegular(ctx, { cbs: true, ibs: true }, locais.reduce((t, l) => t + l.valor, 0)),
+    ...locais,
     cpp(ctx, LIMITES.cppRegular, '20% INSS + 2% RAT + 5,8% terceiros'),
   ];
 }

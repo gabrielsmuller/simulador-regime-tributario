@@ -1,5 +1,5 @@
 import {
-  ATIVIDADES, AVANCADO_PADRAO, ICMS_UF, NOMES_REGIME, VERSAO_PARAMETROS, enquadramento,
+  ATIVIDADES, AVANCADO_PADRAO, ICMS_UF, NOMES_REGIME, NOMES_UF, UFS, VERSAO_PARAMETROS, enquadramento,
   type AtividadeId, type Entrada, type Regime,
 } from '../motor';
 import { Campo, CampoNumero, Icone, Secao, Segmentado } from './campos';
@@ -127,6 +127,27 @@ export function EtapaDados({ entrada, onChange, onAvancar }: {
                 onChange={(ev) => set('percVendasEmpresas', Number(ev.target.value) / 100)} />
               <div className="escala"><span>Só consumidor final</span><span>Só empresas</span></div>
             </div>
+            {ativ.tributoLocal === 'ICMS' && (
+              <div className="grade grade-2 bloco-interestadual">
+                <div className="campo faixa-b2b">
+                  <div className="campo-topo">
+                    <label htmlFor="f-fora">Vendas a consumidor final de outros estados</label>
+                    <span className="valor-b2b">{pct(entrada.percVendasOutrosEstados ?? 0, 0)}</span>
+                  </div>
+                  <input id="f-fora" type="range" min={0} max={100} step={5}
+                    value={Math.round((entrada.percVendasOutrosEstados ?? 0) * 100)}
+                    onChange={(ev) => set('percVendasOutrosEstados', Number(ev.target.value) / 100)} />
+                  <p className="ajuda">E-commerce e vendas a distância. Fora do Simples, geram DIFAL para o destino.</p>
+                </div>
+                <Campo id="f-dest" rotulo="Principal estado de destino">
+                  <select id="f-dest" value={entrada.ufDestinoPrincipal ?? ''} disabled={!(entrada.percVendasOutrosEstados ?? 0)}
+                    onChange={(ev) => set('ufDestinoPrincipal', ev.target.value || undefined)}>
+                    <option value="">Selecione</option>
+                    {UFS.filter((uf) => uf !== entrada.uf).map((uf) => <option key={uf} value={uf}>{uf} · {NOMES_UF[uf]}</option>)}
+                  </select>
+                </Campo>
+              </div>
+            )}
           </Secao>
 
           <Secao numero={4} titulo="Premissas da Reforma"
