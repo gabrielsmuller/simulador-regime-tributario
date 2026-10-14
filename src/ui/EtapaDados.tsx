@@ -1,5 +1,5 @@
 import {
-  ATIVIDADES, AVANCADO_PADRAO, ICMS_UF, NOMES_REGIME, NOMES_UF, UFS, VERSAO_PARAMETROS, enquadramento,
+  ATIVIDADES, AVANCADO_PADRAO, ICMS_UF, NOMES_REGIME, NOMES_UF, UFS, enquadramento,
   type AtividadeId, type Entrada, type Regime,
 } from '../motor';
 import { Campo, CampoNumero, Icone, Secao, Segmentado } from './campos';
@@ -29,9 +29,8 @@ export function EtapaDados({ entrada, onChange, onAvancar, onExemplo }: {
   return (
     <div className="etapa">
       <div className="etapa-titulo">
-        <p className="sobretitulo">Etapa 1 de 2</p>
         <h1>Dados da empresa</h1>
-        <p>Use médias mensais dos últimos 12 meses, ou comece por uma das empresas de exemplo.</p>
+        <p>Use médias mensais dos últimos 12 meses ou comece por um exemplo.</p>
       </div>
 
       <div className="exemplos" role="group" aria-label="Empresas de exemplo">
@@ -47,8 +46,7 @@ export function EtapaDados({ entrada, onChange, onAvancar, onExemplo }: {
         })}
       </div>
 
-      <div className="grade-dados">
-        <div className="coluna-form">
+      <div className="form-largo">
           <Secao numero={1} titulo="Atividade principal"
             descricao="Define o anexo do Simples, a presunção do Lucro Presumido e as reduções de IBS/CBS.">
             <div className="atividades" role="radiogroup" aria-label="Atividade principal">
@@ -150,7 +148,7 @@ export function EtapaDados({ entrada, onChange, onAvancar, onExemplo }: {
             )}
           </Secao>
 
-          <Secao numero={4} titulo="Premissas da Reforma"
+          <Secao numero={4} titulo="Premissas da Reforma" recolhivel
             descricao="Padrões com base na lei e nas estimativas oficiais. Ajuste para simular outro cenário."
             acao={<button type="button" className="botao fantasma pequeno"
               onClick={() => onChange({ ...entrada, avancado: { ...AVANCADO_PADRAO, aliqIcms: ICMS_UF[entrada.uf] } })}>
@@ -176,67 +174,50 @@ export function EtapaDados({ entrada, onChange, onAvancar, onExemplo }: {
               </Campo>
             </div>
           </Secao>
-        </div>
-
-        <Enquadramento entrada={entrada} erros={erros} avisos={avisos} onAvancar={onAvancar} />
       </div>
+
+      <BarraAcao entrada={entrada} erros={erros} avisos={avisos} onAvancar={onAvancar} />
     </div>
   );
 }
 
-function Enquadramento({ entrada, erros, avisos, onAvancar }: {
+/** Rodapé fixo e baixo: resumo do enquadramento e o botão de avançar. Nunca fica cortado. */
+function BarraAcao({ entrada, erros, avisos, onAvancar }: {
   entrada: Entrada; erros: string[]; avisos: string[]; onAvancar: () => void;
 }) {
-  const ativ = ATIVIDADES[entrada.atividade];
   const enq = enquadramento(entrada, 2027);
-  const disponiveis: [Regime, boolean, string][] = [
-    ['SN_UNIFICADO', enq.simplesElegivel, 'teto de R$ 4,8 mi'],
-    ['SN_HIBRIDO', enq.simplesElegivel, 'teto de R$ 4,8 mi'],
-    ['PRESUMIDO', enq.presumidoElegivel, 'teto de R$ 78 mi'],
-    ['REAL', true, ''],
+  const regimes: [Regime, boolean][] = [
+    ['SN_UNIFICADO', enq.simplesElegivel], ['SN_HIBRIDO', enq.simplesElegivel],
+    ['PRESUMIDO', enq.presumidoElegivel], ['REAL', true],
   ];
-  const valido = erros.length === 0;
-
+  const disponiveis = regimes.filter(([, ok]) => ok).length;
+  const alerta = erros[0] ?? avisos[0];
   return (
-    <aside className="enquadramento" aria-labelledby="t-enq">
-      <div className="enq-cartao">
-        <h2 id="t-enq">Enquadramento em 2027</h2>
-        <p className="enq-sub">Atualiza enquanto você preenche.</p>
-        <dl className="enq-lista">
-          <div><dt>Receita bruta 12 meses</dt><dd>{brl(enq.rbt12)}</dd></div>
-          <div><dt>Simples Nacional</dt><dd>{enq.simplesElegivel ? `Anexo ${enq.anexo} · ${enq.faixa}ª faixa` : 'Fora do Simples'}</dd></div>
-          {enq.fatorR !== null && <div><dt>Fator R</dt><dd>{pct(enq.fatorR, 1)} <small>{enq.fatorR >= 0.28 ? '≥ 28%' : '< 28%'}</small></dd></div>}
-          {enq.simplesElegivel && <div><dt>Alíquota nominal / efetiva</dt><dd>{pct(enq.aliqNominal)} / {pct(enq.aliqEfetiva)}</dd></div>}
-          <div><dt>Sublimite de R$ 3,6 mi</dt><dd>{enq.acimaSublimite ? 'Acima' : 'Dentro'}</dd></div>
-          <div><dt>Redução de IBS/CBS</dt><dd>{ativ.reducaoIbsCbs ? `${pct(ativ.reducaoIbsCbs, 0)}` : 'Nenhuma'}</dd></div>
-        </dl>
-        {ativ.fundamentoReducao && <p className="enq-nota">{ativ.fundamentoReducao}</p>}
-
-        <h3>Regimes disponíveis</h3>
-        <ul className="enq-regimes">
-          {disponiveis.map(([r, ok, motivo]) => (
-            <li key={r} className={ok ? '' : 'nao'}>
-              <Icone tipo={ok ? 'ok' : 'critico'} />
-              <span>{NOMES_REGIME[r].nome}</span>
-              {!ok && <small>{motivo}</small>}
-              {r === entrada.regimeAtual && <span className="tag">atual</span>}
-            </li>
-          ))}
-        </ul>
-
-        {(erros.length > 0 || avisos.length > 0) && (
-          <ul className="enq-alertas">
-            {erros.map((t) => <li key={t} className="erro"><Icone tipo="critico" />{t}</li>)}
-            {avisos.map((t) => <li key={t}><Icone tipo="atencao" />{t}</li>)}
-          </ul>
-        )}
-
-        <button type="button" className="botao primario largo" disabled={!valido} onClick={onAvancar}>
-          Gerar análise
-          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8h10M9 4l4 4-4 4" /></svg>
-        </button>
-        <p className="enq-rodape">Cálculo determinístico · parâmetros de {VERSAO_PARAMETROS.split('-').reverse().join('/')}</p>
-      </div>
-    </aside>
+    <div className="barra-acao" role="region" aria-label="Enquadramento e próximo passo">
+      <dl className="barra-acao-itens">
+        <div><dt>Receita 12 meses</dt><dd>{brl(enq.rbt12)}</dd></div>
+        <div>
+          <dt>Simples Nacional</dt>
+          <dd>{enq.simplesElegivel ? `Anexo ${enq.anexo} · ${enq.faixa}ª faixa · ${pct(enq.aliqEfetiva)}` : 'Fora do teto'}</dd>
+        </div>
+        {enq.fatorR !== null && <div><dt>Fator R</dt><dd>{pct(enq.fatorR, 1)}</dd></div>}
+        <div>
+          <dt>Regimes possíveis</dt>
+          <dd className="pontos-regimes" title={regimes.map(([r, ok]) => `${NOMES_REGIME[r].nome}: ${ok ? 'sim' : 'não'}`).join(' · ')}>
+            {regimes.map(([r, ok]) => <i key={r} className={`ponto c-${r} ${ok ? '' : 'apagado'}`} />)}
+            {disponiveis} de 4
+          </dd>
+        </div>
+      </dl>
+      {alerta && (
+        <p className={`barra-acao-alerta ${erros.length ? 'erro' : ''}`}>
+          <Icone tipo={erros.length ? 'critico' : 'atencao'} />{alerta}
+        </p>
+      )}
+      <button type="button" className="botao primario" disabled={erros.length > 0} onClick={onAvancar}>
+        Gerar análise
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8h10M9 4l4 4-4 4" /></svg>
+      </button>
+    </div>
   );
 }

@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { ANOS, ATIVIDADES, FONTES, NOMES_REGIME, REGIMES, aliquotasIva, criarContexto, segundaOpcao, type Ano, type Entrada, type Regime, type Resultado } from '../motor';
-import { Icone, Painel, Segmentado } from './campos';
+import { Icone, Painel, PainelAbas, Segmentado } from './campos';
 import { pontosDeAtencao } from './diagnostico';
 import { brl, pct } from './formato';
 import { Composicao, GraficoEvolucao } from './graficos';
 
 type Visao = 'mensal' | 'anual' | 'efetiva';
 
-export function EtapaAnalise({ entrada, resultado, onEditar, podeImprimir }: {
-  entrada: Entrada; resultado: Resultado; onEditar: () => void; podeImprimir: boolean;
-}) {
+export function EtapaAnalise({ entrada, resultado }: { entrada: Entrada; resultado: Resultado }) {
   const [ano, setAno] = useState<Ano>(2027);
   const [regimeSel, setRegimeSel] = useState<Regime>(entrada.regimeAtual);
   const [visao, setVisao] = useState<Visao>('mensal');
+  const [aba, setAba] = useState<'evolucao' | 'tabela' | 'atencao' | 'credito' | 'memoria' | 'premissas'>('evolucao');
   const dados = resultado.anos.find((a) => a.ano === ano)!;
   const a27 = resultado.anos[0];
   const atual27 = a27.regimes[entrada.regimeAtual];
@@ -27,24 +26,9 @@ export function EtapaAnalise({ entrada, resultado, onEditar, podeImprimir }: {
 
   return (
     <div className="etapa">
-      <div className="etapa-titulo com-acoes">
-        <div>
-          <p className="sobretitulo">Etapa 2 de 2 · Análise comparativa</p>
-          <h1>{entrada.nomeEmpresa?.trim() || 'Sua empresa na Reforma'}</h1>
-          <ul className="contexto">
-            <li>{ativ.nome}</li>
-            <li>{entrada.uf}</li>
-            <li>{brl(entrada.faturamentoMensal)}/mês</li>
-            <li>Hoje: {NOMES_REGIME[entrada.regimeAtual].nome.replace('Simples Unificado', 'Simples Nacional')}</li>
-          </ul>
-        </div>
-        <div className="acoes">
-          <button type="button" className="botao secundario" onClick={onEditar}>
-            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M13 8H3M7 4 3 8l4 4" /></svg>
-            Editar dados
-          </button>
-          {podeImprimir && <button type="button" className="botao secundario" onClick={() => window.print()}>Imprimir relatório</button>}
-        </div>
+      <div className="etapa-titulo">
+        <h1>Análise comparativa</h1>
+        <p>Carga tributária estimada de 2027 a 2033 nos quatro regimes.</p>
       </div>
 
       {/* Resumo executivo */}
@@ -136,128 +120,134 @@ export function EtapaAnalise({ entrada, resultado, onEditar, podeImprimir }: {
         </div>
       </Painel>
 
-      <div className="grade-analise">
-        <Painel titulo="Evolução da carga mensal" subtitulo="2027 a 2033 · clique em um ano para selecioná-lo">
-          <GraficoEvolucao resultado={resultado} ano={ano} onAno={setAno} regimeAtual={entrada.regimeAtual} />
-        </Painel>
-        <Painel titulo={`Composição da carga em ${ano}`} subtitulo="Por tributo, em R$ por mês">
-          <Composicao dados={dados} regimeSel={regimeSel} onRegime={setRegimeSel} />
-        </Painel>
-      </div>
+      <PainelAbas abas={[
+        { id: 'evolucao', rotulo: 'Evolução e composição' },
+        { id: 'tabela', rotulo: 'Ano a ano' },
+        { id: 'atencao', rotulo: 'Pontos de atenção', contador: atencao.length },
+        { id: 'credito', rotulo: 'Crédito para clientes' },
+        { id: 'memoria', rotulo: 'Memória de cálculo' },
+        { id: 'premissas', rotulo: 'Premissas' },
+      ]} ativa={aba} onAba={setAba} acao={
+        aba === 'tabela' ? <Segmentado rotulo="Visão da tabela" valor={visao} onChange={setVisao}
+          opcoes={[{ valor: 'mensal', rotulo: 'R$/mês' }, { valor: 'anual', rotulo: 'R$/ano' }, { valor: 'efetiva', rotulo: '% do faturamento' }]} />
+        : aba === 'memoria' ? <select aria-label="Ano da memória" value={ano} onChange={(e) => setAno(Number(e.target.value) as Ano)}>
+          {ANOS.map((a) => <option key={a} value={a}>{a}</option>)}
+        </select> : undefined
+      }>
+        {aba === 'evolucao' && (
+          <div className="duas-colunas">
+            <div>
+              <h3 className="subtitulo">Carga mensal de 2027 a 2033</h3>
+              <GraficoEvolucao resultado={resultado} ano={ano} onAno={setAno} regimeAtual={entrada.regimeAtual} />
+            </div>
+            <div>
+              <h3 className="subtitulo">De onde vem a carga em {ano}</h3>
+              <Composicao dados={dados} regimeSel={regimeSel} onRegime={(r) => { setRegimeSel(r); setAba('memoria'); }} />
+            </div>
+          </div>
+        )}
 
-      {/* Tabela anual */}
-      <Painel titulo="Tabela ano a ano" subtitulo="Menor valor de cada ano em destaque"
-        acao={<Segmentado rotulo="Visão da tabela" valor={visao} onChange={setVisao}
-          opcoes={[{ valor: 'mensal', rotulo: 'R$/mês' }, { valor: 'anual', rotulo: 'R$/ano' }, { valor: 'efetiva', rotulo: '% do faturamento' }]} />}>
-        <div className="tabela-rolagem">
-          <table className="tabela">
-            <thead>
-              <tr>
-                <th scope="col">Regime</th>
-                {resultado.anos.map((a) => <th key={a.ano} scope="col" className={`num ${a.ano === ano ? 'col-sel' : ''}`}>{a.ano}</th>)}
-                {visao !== 'efetiva' && <th scope="col" className="num total">Total 7 anos</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {REGIMES.map((r) => {
-                const total = resultado.anos.reduce((s, a) => s + (a.regimes[r].elegivel ? a.regimes[r].carga * 12 : NaN), 0);
-                return (
-                  <tr key={r} className={r === entrada.regimeAtual ? 'linha-atual' : ''}>
-                    <th scope="row"><i className={`ponto c-${r}`} />{NOMES_REGIME[r].nome}{r === entrada.regimeAtual && <span className="tag">atual</span>}</th>
-                    {resultado.anos.map((a) => {
-                      const res = a.regimes[r];
-                      const v = visao === 'mensal' ? brl(res.carga) : visao === 'anual' ? brl(res.carga * 12) : pct(res.cargaEfetiva, 1);
-                      return <td key={a.ano} className={`num ${a.menor === r ? 'min' : ''} ${a.ano === ano ? 'col-sel' : ''}`}>{res.elegivel ? v : '—'}</td>;
-                    })}
-                    {visao !== 'efetiva' && <td className="num total">{Number.isFinite(total) ? brl(total) : '—'}</td>}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </Painel>
+        {aba === 'tabela' && (
+          <div className="tabela-rolagem">
+            <table className="tabela">
+              <thead>
+                <tr>
+                  <th scope="col">Regime</th>
+                  {resultado.anos.map((a) => <th key={a.ano} scope="col" className={`num ${a.ano === ano ? 'col-sel' : ''}`}>{a.ano}</th>)}
+                  {visao !== 'efetiva' && <th scope="col" className="num total">Total 7 anos</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {REGIMES.map((r) => {
+                  const total = resultado.anos.reduce((s, a) => s + (a.regimes[r].elegivel ? a.regimes[r].carga * 12 : NaN), 0);
+                  return (
+                    <tr key={r} className={r === entrada.regimeAtual ? 'linha-atual' : ''}>
+                      <th scope="row"><i className={`ponto c-${r}`} />{NOMES_REGIME[r].nome}{r === entrada.regimeAtual && <span className="tag">atual</span>}</th>
+                      {resultado.anos.map((a) => {
+                        const res = a.regimes[r];
+                        const v = visao === 'mensal' ? brl(res.carga) : visao === 'anual' ? brl(res.carga * 12) : pct(res.cargaEfetiva, 1);
+                        return <td key={a.ano} className={`num ${a.menor === r ? 'min' : ''} ${a.ano === ano ? 'col-sel' : ''}`}>{res.elegivel ? v : '—'}</td>;
+                      })}
+                      {visao !== 'efetiva' && <td className="num total">{Number.isFinite(total) ? brl(total) : '—'}</td>}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      <div className="grade-analise igual">
-        <Painel titulo="Crédito para clientes empresa" subtitulo={`Quanto quem compra de você desconta de IBS/CBS · ${ano}`}>
-          <div className="tabela-rolagem"><table className="tabela compacta">
-            <thead><tr><th>Regime</th><th className="num">A cada R$ 100 vendidos</th><th className="num">Por mês ({pct(entrada.percVendasEmpresas, 0)} B2B)</th></tr></thead>
-            <tbody>
-              {REGIMES.map((r) => {
-                const res = dados.regimes[r];
-                return (
-                  <tr key={r}>
-                    <th scope="row"><i className={`ponto c-${r}`} />{NOMES_REGIME[r].nome}</th>
-                    <td className="num">{res.elegivel ? brl(res.creditoPorReal * 100) : '—'}</td>
-                    <td className="num">{res.elegivel ? brl(res.creditoClientesMes) : '—'}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table></div>
-          <p className="nota">
-            {ativ.creditoVedado
-              ? 'Bares e restaurantes não transferem crédito ao cliente (LC 214, art. 276).'
-              : 'No Unificado, o crédito se limita à parte de IBS/CBS paga dentro do DAS. Nos demais, o cliente aproveita a alíquota cheia.'}
-          </p>
-        </Painel>
-        <Painel titulo="Pontos de atenção" subtitulo={atencao.length ? `${atencao.length} ${atencao.length > 1 ? 'itens' : 'item'} para revisar com seu contador` : 'Nada fora do comum para esta empresa'}>
-          {atencao.length === 0 && <p className="nota">Nenhum alerta específico. Revise as premissas abaixo com seu contador.</p>}
-          <ul className="atencao">
-            {atencao.map((m) => (
-              <li key={m.titulo} className={`sev-${m.tipo}`}>
-                <Icone tipo={m.tipo} />
-                <div><b>{m.titulo}</b><p>{m.texto}</p></div>
-              </li>
-            ))}
-          </ul>
-        </Painel>
-      </div>
+        {aba === 'atencao' && (
+          atencao.length === 0 ? <p className="nota">Nenhum alerta específico para esta empresa.</p> : (
+            <ul className="atencao grade-atencao">
+              {atencao.map((m) => (
+                <li key={m.titulo} className={`sev-${m.tipo}`}>
+                  <Icone tipo={m.tipo} />
+                  <div><b>{m.titulo}</b><p>{m.texto}</p></div>
+                </li>
+              ))}
+            </ul>
+          )
+        )}
 
-      <Memoria entrada={entrada} resultado={resultado} ano={ano} regime={regimeSel} onRegime={setRegimeSel} onAno={setAno} />
+        {aba === 'credito' && (
+          <div className="credito-visual">
+            <p className="nota">Quanto de IBS/CBS quem compra de você pode descontar em {ano}, a cada R$ 100 vendidos.</p>
+            {REGIMES.map((r) => {
+              const res = dados.regimes[r];
+              const max = Math.max(...REGIMES.map((x) => dados.regimes[x].creditoPorReal), 0.0001);
+              return (
+                <div key={r} className="barra-credito">
+                  <span className="barra-nome"><i className={`ponto c-${r}`} />{NOMES_REGIME[r].nome}</span>
+                  <span className="barra-trilho"><span className={`barra-cheia c-${r}`} style={{ width: `${res.elegivel ? (res.creditoPorReal / max) * 100 : 0}%` }} /></span>
+                  <span className="barra-total">{res.elegivel ? brl(res.creditoPorReal * 100) : '—'}</span>
+                </div>
+              );
+            })}
+            <p className="nota">
+              {ativ.creditoVedado
+                ? 'Bares e restaurantes não transferem crédito ao cliente (LC 214, art. 276).'
+                : `Com ${pct(entrada.percVendasEmpresas, 0)} das vendas para empresas, seus clientes aproveitariam ${brl(dados.regimes.SN_HIBRIDO.creditoClientesMes)}/mês no Híbrido e ${brl(dados.regimes.SN_UNIFICADO.creditoClientesMes)}/mês no Unificado.`}
+            </p>
+          </div>
+        )}
 
-      <Painel titulo="Premissas e base legal" subtitulo="Parâmetros usados nesta análise" className="premissas">
-        <div className="grade-premissas">
-          <div className="tabela-rolagem"><table className="tabela compacta">
-            <tbody>
-              <tr><th scope="row">CBS / IBS (alíquota cheia)</th><td className="num">{pct(entrada.avancado.aliqCbs)} / {pct(entrada.avancado.aliqIbs)}</td></tr>
-              <tr><th scope="row">CBS / IBS em {ano}</th><td className="num">{(() => { const v = aliquotasIva(criarContexto(entrada, ano)); return `${pct(v.cbs)} / ${pct(v.ibs)}`; })()}</td></tr>
-              <tr><th scope="row">ICMS ({entrada.uf}) / ISS</th><td className="num">{pct(entrada.avancado.aliqIcms, 1)} / {pct(entrada.avancado.aliqIss, 1)}</td></tr>
-              <tr><th scope="row">Compras de fornecedores fora do Simples</th><td className="num">{pct(entrada.avancado.percFornecedoresRegular, 0)}</td></tr>
-              <tr><th scope="row">Margem (Lucro Real)</th><td className="num">{pct(entrada.margemLucro, 1)}</td></tr>
-              <tr><th scope="row">Crescimento anual</th><td className="num">{pct(entrada.avancado.crescimentoAnual, 1)}</td></tr>
-            </tbody>
-          </table></div>
-          <div className="tabela-rolagem"><table className="tabela compacta">
-            <thead><tr><th>Regra</th><th>Fonte</th></tr></thead>
-            <tbody>{FONTES.map((f) => <tr key={f.item}><td>{f.item}</td><td className="fonte">{f.fonte}</td></tr>)}</tbody>
-          </table></div>
-        </div>
-        <p className="nota aviso">
-          Estimativa direcional, sem garantia de economia. As alíquotas de IBS e CBS ainda serão fixadas pelo Senado (até 15/12/2026). Fora da conta: FGTS, Imposto Seletivo, substituição tributária,
-          benefícios estaduais, regimes específicos e créditos de fornecedores do Simples. Valide a decisão com seu contador.
-        </p>
-      </Painel>
+        {aba === 'memoria' && <Memoria entrada={entrada} resultado={resultado} ano={ano} regime={regimeSel} onRegime={setRegimeSel} />}
+
+        {aba === 'premissas' && (
+          <>
+            <div className="duas-colunas">
+              <div className="tabela-rolagem"><table className="tabela compacta">
+                <tbody>
+                  <tr><th scope="row">CBS / IBS (alíquota cheia)</th><td className="num">{pct(entrada.avancado.aliqCbs)} / {pct(entrada.avancado.aliqIbs)}</td></tr>
+                  <tr><th scope="row">CBS / IBS em {ano}</th><td className="num">{(() => { const v = aliquotasIva(criarContexto(entrada, ano)); return `${pct(v.cbs)} / ${pct(v.ibs)}`; })()}</td></tr>
+                  <tr><th scope="row">ICMS ({entrada.uf}) / ISS</th><td className="num">{pct(entrada.avancado.aliqIcms, 1)} / {pct(entrada.avancado.aliqIss, 1)}</td></tr>
+                  <tr><th scope="row">Compras de fornecedores fora do Simples</th><td className="num">{pct(entrada.avancado.percFornecedoresRegular, 0)}</td></tr>
+                  <tr><th scope="row">Margem (Lucro Real)</th><td className="num">{pct(entrada.margemLucro, 1)}</td></tr>
+                  <tr><th scope="row">Crescimento anual</th><td className="num">{pct(entrada.avancado.crescimentoAnual, 1)}</td></tr>
+                </tbody>
+              </table></div>
+              <div className="tabela-rolagem"><table className="tabela compacta">
+                <thead><tr><th>Regra</th><th>Fonte</th></tr></thead>
+                <tbody>{FONTES.map((f) => <tr key={f.item}><td>{f.item}</td><td className="fonte">{f.fonte}</td></tr>)}</tbody>
+              </table></div>
+            </div>
+            <p className="nota">Fora da conta: FGTS, Imposto Seletivo, substituição tributária, benefícios estaduais, regimes específicos e créditos de fornecedores do Simples.</p>
+          </>
+        )}
+      </PainelAbas>
     </div>
   );
 }
 
-function Memoria({ entrada, resultado, ano, regime, onRegime, onAno }: {
-  entrada: Entrada; resultado: Resultado; ano: Ano; regime: Regime; onRegime: (r: Regime) => void; onAno: (a: Ano) => void;
+function Memoria({ entrada, resultado, ano, regime, onRegime }: {
+  entrada: Entrada; resultado: Resultado; ano: Ano; regime: Regime; onRegime: (r: Regime) => void;
 }) {
   const res = resultado.anos.find((a) => a.ano === ano)!.regimes[regime];
   return (
-    <Painel titulo="Memória de cálculo" subtitulo="Como cada valor foi obtido"
-      acao={<select aria-label="Ano da memória" value={ano} onChange={(e) => onAno(Number(e.target.value) as Ano)}>
-        {ANOS.map((a) => <option key={a} value={a}>{a}</option>)}
-      </select>}>
-      <div className="abas" role="tablist" aria-label="Regime">
-        {REGIMES.map((r) => (
-          <button key={r} type="button" role="tab" aria-selected={r === regime} className={r === regime ? 'on' : ''} onClick={() => onRegime(r)}>
-            <i className={`ponto c-${r}`} />{NOMES_REGIME[r].nome}{r === entrada.regimeAtual && <span className="tag">atual</span>}
-          </button>
-        ))}
-      </div>
+    <div className="memoria-wrap">
+      <Segmentado rotulo="Regime" valor={regime} onChange={onRegime}
+        opcoes={REGIMES.map((r) => ({ valor: r, rotulo: NOMES_REGIME[r].nome + (r === entrada.regimeAtual ? ' (atual)' : '') }))} />
       {res.elegivel ? (
         <div className="tabela-rolagem">
           <table className="tabela memoria">
@@ -278,6 +268,6 @@ function Memoria({ entrada, resultado, ano, regime, onRegime, onAno }: {
           </table>
         </div>
       ) : <p className="nota">{res.motivo}</p>}
-    </Painel>
+    </div>
   );
 }

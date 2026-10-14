@@ -55,20 +55,26 @@ export function Campo({ id, rotulo, ajuda, extra, children }: {
   );
 }
 
-export function Secao({ numero, titulo, descricao, acao, children }: {
-  numero?: number; titulo: string; descricao?: string; acao?: ReactNode; children: ReactNode;
+export function Secao({ numero, titulo, descricao, acao, recolhivel, children }: {
+  numero?: number; titulo: string; descricao?: string; acao?: ReactNode; recolhivel?: boolean; children: ReactNode;
 }) {
+  const [aberta, setAberta] = useState(!recolhivel);
   return (
-    <section className="secao">
+    <section className={`secao ${recolhivel ? 'recolhivel' : ''} ${aberta ? 'aberta' : ''}`}>
       <header className="secao-topo">
         {numero !== undefined && <span className="secao-num" aria-hidden="true">{numero}</span>}
         <div className="secao-titulos">
           <h2>{titulo}</h2>
           {descricao && <p>{descricao}</p>}
         </div>
-        {acao && <div className="secao-acao">{acao}</div>}
+        {aberta && acao && <div className="secao-acao">{acao}</div>}
+        {recolhivel && (
+          <button type="button" className="botao fantasma pequeno" aria-expanded={aberta} onClick={() => setAberta(!aberta)}>
+            {aberta ? 'Recolher' : 'Ajustar'}
+          </button>
+        )}
       </header>
-      <div className="secao-corpo">{children}</div>
+      {aberta && <div className="secao-corpo">{children}</div>}
     </section>
   );
 }
@@ -119,5 +125,30 @@ export function Icone({ tipo }: { tipo: Severidade }) {
       fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       {caminho}
     </svg>
+  );
+}
+
+export interface Aba<T extends string> { id: T; rotulo: string; contador?: number }
+
+/** Abas dentro de um painel: só o conteúdo da aba ativa aparece. */
+export function PainelAbas<T extends string>({ abas, ativa, onAba, acao, children }: {
+  abas: Aba<T>[]; ativa: T; onAba: (a: T) => void; acao?: ReactNode; children: ReactNode;
+}) {
+  return (
+    <section className="painel painel-abas">
+      <header className="abas-topo">
+        <div className="abas" role="tablist">
+          {abas.map((a) => (
+            <button key={a.id} type="button" role="tab" aria-selected={a.id === ativa}
+              className={a.id === ativa ? 'on' : ''} onClick={() => onAba(a.id)}>
+              {a.rotulo}
+              {a.contador !== undefined && a.contador > 0 && <span className="contador">{a.contador}</span>}
+            </button>
+          ))}
+        </div>
+        {acao && <div className="painel-acao">{acao}</div>}
+      </header>
+      <div className="abas-corpo" role="tabpanel">{children}</div>
+    </section>
   );
 }
