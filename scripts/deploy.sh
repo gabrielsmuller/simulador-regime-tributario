@@ -23,4 +23,4 @@ aws s3 cp dist/index.html "s3://$BUCKET/index.html" \
 aws cloudfront create-invalidation --distribution-id "$DISTRIBUICAO" --paths "/*" \
   --query "Invalidation.Id" --output text
 
-echo "Publicado em https://simuladortributario.gabrielsmuller.dev"
+echo "Publicado em https://d3ikdc9bz77qrz.cloudfront.net"
