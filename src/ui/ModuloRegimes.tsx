@@ -18,7 +18,7 @@ export interface Salvas {
 
 export function ModuloRegimes({ entrada, onChange, onExemplo, etapa, onEtapa, salvas }: {
   entrada: Entrada; onChange: (e: Entrada) => void; onExemplo: (x: Exemplo) => void;
-  etapa: EtapaRegimes; onEtapa: (e: EtapaRegimes) => void; salvas: Salvas;
+  etapa: EtapaRegimes; onEtapa: (e: EtapaRegimes) => void; salvas?: Salvas;
 }) {
   useEffect(() => { window.scrollTo({ top: 0 }); }, [etapa]);
   const valido = validar(entrada).erros.length === 0;

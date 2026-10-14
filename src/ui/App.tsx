@@ -52,6 +52,9 @@ const dadosDoHash = (): Pacote | null => {
 
 interface Aviso { texto: string; link?: string; desfazer?: () => void }
 
+/** "Salvar empresa" e "Copiar link" ficam ocultos por enquanto; links já enviados continuam abrindo. */
+const SALVAR_E_COMPARTILHAR = false;
+
 export function App() {
   const [modulo, setModulo] = useState<Modulo>(lerHash);
   const [etapa, setEtapa] = useState<EtapaRegimes>('dados');
@@ -199,17 +202,19 @@ export function App() {
             {migalha && <><span aria-hidden="true">/</span><b>{migalha}</b></>}
           </nav>
           <span className="topo-info">{NOMES_UF[empresa.uf]} · {regime}</span>
-          <button type="button" className="botao fantasma pequeno topo-link" disabled={!valido} onClick={copiarLink}
-            title="Copia um link com os dados desta empresa, para abrir em outro aparelho">
-            <Icone>{ICONES.link}</Icone><span>Copiar link</span>
-          </button>
+          {SALVAR_E_COMPARTILHAR && (
+            <button type="button" className="botao fantasma pequeno topo-link" disabled={!valido} onClick={copiarLink}
+              title="Copia um link com os dados desta empresa, para abrir em outro aparelho">
+              <Icone>{ICONES.link}</Icone><span>Copiar link</span>
+            </button>
+          )}
         </header>
 
         <main className="conteudo">
           {modulo === 'regimes' && (
             <ModuloRegimes entrada={empresa} onChange={setEmpresa} onExemplo={aplicarExemplo} etapa={etapa} onEtapa={setEtapa}
-              salvas={{ lista: salvas, onSalvar: salvar, onExcluir: excluir,
-                onCarregar: (s) => { carregar(s); setAviso({ texto: `"${s.nome}" carregada.` }); } }} />
+              salvas={SALVAR_E_COMPARTILHAR ? { lista: salvas, onSalvar: salvar, onExcluir: excluir,
+                onCarregar: (s) => { carregar(s); setAviso({ texto: `"${s.nome}" carregada.` }); } } : undefined} />
           )}
           {modulo === 'st-difal' && <ModuloIcms empresa={empresa} op={operacao} onOp={setOperacao} />}
           {modulo === 'beneficios' && (
