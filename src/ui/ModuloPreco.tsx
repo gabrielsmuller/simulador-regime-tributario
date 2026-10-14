@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ANOS, NOMES_REGIME, REGIMES, ajustePreco, simular, type Entrada, type Regime } from '../motor';
+import { ANOS, NOMES_REGIME, REGIMES, ajustePreco, simular, type AjusteAno, type Entrada, type Regime } from '../motor';
 import { CampoNumero, Icone, Painel, Segmentado } from './campos';
 import { validar } from './diagnostico';
 import { brl, pct } from './formato';
@@ -10,7 +10,23 @@ export const contratoValido = (v: unknown): v is Contrato =>
   !!v && typeof v === 'object' && typeof (v as Contrato).valor === 'number' && typeof (v as Contrato).inicio === 'number';
 
 const ANOS_CONTRATO = [2026, ...ANOS];
-const variacao = (f: number) => `${f >= 1 ? '+' : '−'}${pct(Math.abs(f - 1), 1)}`;
+export const variacao = (f: number) => `${f >= 1 ? '+' : '−'}${pct(Math.abs(f - 1), 1)}`;
+
+/** Regime simulado: o escolhido no módulo, se disponível; senão o de hoje (o Híbrido não existe em 2026). */
+export function regimeDoContrato(empresa: Entrada, contrato: Contrato, elegiveis: Regime[]): Regime {
+  const hoje: Regime = empresa.regimeAtual === 'SN_HIBRIDO' ? 'SN_UNIFICADO' : empresa.regimeAtual;
+  return contrato.regime && elegiveis.includes(contrato.regime) ? contrato.regime
+    : elegiveis.includes(hoje) ? hoje : elegiveis[0] ?? hoje;
+}
+
+/** Valor do contrato ano a ano: 2026 é a base (fator 1); 12 meses em cada ano. */
+export function calcularContrato(contrato: Contrato, anos: AjusteAno[]) {
+  const fatorAno = (ano: number) => (ano === 2026 ? 1 : anos.find((a) => a.ano === ano)?.fator ?? null);
+  const linhas = ANOS_CONTRATO.filter((a) => a >= contrato.inicio && a <= contrato.fim).map((ano) => ({ ano, fator: fatorAno(ano) }));
+  const original = linhas.length * contrato.valor * 12;
+  const ajustado = linhas.reduce((s, l) => s + contrato.valor * 12 * (l.fator ?? NaN), 0);
+  return { linhas, original, ajustado };
+}
 
 export function ModuloPreco({ empresa, contrato, onContrato, onDados }: {
   empresa: Entrada; contrato: Contrato; onContrato: (c: Contrato) => void; onDados: () => void;
@@ -19,8 +35,7 @@ export function ModuloPreco({ empresa, contrato, onContrato, onDados }: {
   const res = useMemo(() => (valido ? simular(empresa) : null), [empresa, valido]);
   const elegiveis = res ? REGIMES.filter((r) => res.anos[0].regimes[r].elegivel) : [];
   const regimeHoje: Regime = empresa.regimeAtual === 'SN_HIBRIDO' ? 'SN_UNIFICADO' : empresa.regimeAtual;
-  const regime: Regime = contrato.regime && elegiveis.includes(contrato.regime) ? contrato.regime
-    : elegiveis.includes(regimeHoje) ? regimeHoje : elegiveis[0] ?? regimeHoje;
+  const regime = regimeDoContrato(empresa, contrato, elegiveis);
   const ajuste = useMemo(() => (valido ? ajustePreco(empresa, regime) : null), [empresa, regime, valido]);
 
   if (!ajuste || !res) {
@@ -46,10 +61,7 @@ export function ModuloPreco({ empresa, contrato, onContrato, onDados }: {
     : fatores.every((f) => Math.abs(f - 1) < 0.0005) ? 'Seu preço pode ficar igual até 2033'
     : a27.fator >= 1 ? `Para manter o lucro, o preço sobe ${pct(a27.fator - 1, 1)} em 2027`
     : `Dá para baixar o preço em ${pct(1 - a27.fator, 1)} em 2027 e manter o lucro`;
-  const fatorAno = (ano: number) => (ano === 2026 ? 1 : anos.find((a) => a.ano === ano)?.fator ?? null);
-  const anosContrato = ANOS_CONTRATO.filter((a) => a >= contrato.inicio && a <= contrato.fim);
-  const totalOriginal = anosContrato.length * contrato.valor * 12;
-  const totalAjustado = anosContrato.reduce((s, a) => s + contrato.valor * 12 * (fatorAno(a) ?? NaN), 0);
+  const { linhas: anosContrato, original: totalOriginal, ajustado: totalAjustado } = calcularContrato(contrato, anos);
 
   return (
     <div className="etapa">
@@ -170,8 +182,7 @@ export function ModuloPreco({ empresa, contrato, onContrato, onDados }: {
               </tr>
             </thead>
             <tbody>
-              {anosContrato.map((ano) => {
-                const f = fatorAno(ano);
+              {anosContrato.map(({ ano, fator: f }) => {
                 return (
                   <tr key={ano}>
                     <th scope="row">{ano}{ano === 2026 && <span className="tag">hoje</span>}</th>

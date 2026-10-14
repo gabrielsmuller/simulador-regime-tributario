@@ -1,0 +1,55 @@
+ROTEIRO - CONVERSA COM OS CONTADORES
+Simulador Tributário (piloto) - https://d3ikdc9bz77qrz.cloudfront.net
+Duração: cerca de 50 minutos
+
+
+OBJETIVO
+- Os números estão certos?
+- O que falta para usar com cliente?
+- Eles usariam ou indicariam?
+
+Já conferido: num simulador pago (simuladordareforma.com.br), o mesmo
+exemplo deu o mesmo DAS, o mesmo DAS reduzido do Híbrido e o mesmo crédito
+ao cliente. A diferença no total vem só das alíquotas de IBS/CBS usadas.
+
+
+DEMONSTRAÇÃO (usar só as empresas de exemplo)
+1. O que é (2 min): compara os 4 regimes de 2027 a 2033, para o empresário.
+2. Regimes na Reforma (8 min) - Atacado regional: recomendação, ponto de
+   virada e memória de cálculo.
+3. ST e DIFAL (5 min) - Loja virtual: venda SP -> BA e melhores destinos.
+4. Benefícios fiscais (3 min) - Loja virtual: incentivos de e-commerce.
+5. Preço e contratos (5 min) - Atacado regional no Simples Híbrido: quanto
+   o preço sobe para manter o lucro e o efeito num contrato.
+6. Relatório completo (2 min).
+
+
+PERGUNTAS (em ordem de prioridade)
+1. Prazo de opção entre Simples Unificado e Híbrido: é 30/10/2026 ou as
+   janelas são em setembro e março? (o site hoje só avisa que há prazo)
+2. Alíquotas de IBS/CBS até o Senado fixar: usar CBS 9,21% e IBS 18,7%?
+3. Optante do Simples paga DIFAL na venda a consumidor final?
+   (hoje não cobramos - ADI 5464)
+4. Créditos nas compras: 70% de fornecedores fora do Simples é razoável?
+   Crédito de fornecedor do Simples está zerado.
+5. Carga de hoje: PIS/COFINS cumulativo no Presumido e não cumulativo no
+   Real, sem ICMS na base. "Mesmo lucro" = faturamento menos tributos.
+6. ST: precisamos de base por NCM/CEST e MVA por estado?
+7. Benefícios: percentuais de SC TTD 478, ES Compete, MG TTS, PR importação
+   e TO e-commerce estão atuais?
+8. Presumido: considerar o acréscimo de 10% da LC 224/2025?
+
+
+SOBRE O PRODUTO
+Perguntar:
+- Em que momento do atendimento usariam com o cliente?
+- O empresário entende a recomendação sozinho?
+- Precisariam de PDF com logo, várias empresas ou exportar para Excel?
+
+Deixar claro:
+- É estimativa e não substitui o contador.
+- Fora da conta: IPI, Imposto Seletivo, FGTS e regimes específicos.
+- Benefícios: 12 incentivos em 8 estados, todos a confirmar.
+
+
+Lista completa das premissas: docs/REVISAO-CONTADOR.md

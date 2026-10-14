@@ -1022,3 +1022,36 @@ details.painel.outros[open] > summary { margin-bottom: 12px !important; }
   .reajuste { grid-template-columns: 44px minmax(0, 1fr) 64px; }
   .reajuste-preco { grid-column: 2 / -1; }
 }
+
+/* ajuda de ST */
+.parametros-rodape { gap: 18px; flex-wrap: wrap; }
+.ajuda-st { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 18px; padding: 14px 16px; background: var(--brand-soft); border-radius: 8px; align-items: start; }
+.ajuda-st h3 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.ajuda-st p { font-size: 13px; color: var(--ink-2); }
+.ajuda-st .botao { grid-column: 1 / -1; justify-self: start; }
+@media (max-width: 900px) { .ajuda-st { grid-template-columns: minmax(0, 1fr); } }
+
+/* empresas salvas: mesmo cartão dos exemplos, com botão de remover */
+.exemplo.salva { flex-direction: row; align-items: stretch; gap: 0; padding: 0; overflow: hidden; }
+.salva-abrir { flex: 1; min-width: 0; display: grid; gap: 2px; text-align: left; padding: 8px 12px; background: none; border: 0; }
+.salva-abrir b, .salva-abrir span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.salva-excluir { flex: none; width: 34px; background: none; border: 0; border-left: 1px solid var(--line); color: var(--ink-3); font-size: 18px; line-height: 1; }
+.salva-excluir:hover { color: var(--bad); background: var(--bad-soft); }
+
+/* copiar link na barra do topo */
+.topo-link { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+.topo-link .nav-icone { width: 16px; height: 16px; }
+@media (max-width: 640px) { .topo-link { margin-left: auto; } .topo-link span { display: none; } }
+
+/* aviso flutuante */
+.aviso-flutuante {
+  position: fixed; top: 68px; right: 24px; z-index: 60; width: min(420px, calc(100vw - 32px));
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center;
+  padding: 12px 14px; background: var(--ink); color: #fff; border-radius: 8px; box-shadow: 0 8px 24px rgb(16 24 40 / .18); font-size: 13.5px;
+}
+.aviso-flutuante p { grid-column: 1; }
+.aviso-flutuante input { grid-column: 1 / -1; height: 34px; font-size: 12px; color: var(--ink); }
+.aviso-flutuante .link { grid-column: 1; justify-self: start; color: #9fc0e6; }
+.aviso-fechar { grid-column: 2; grid-row: 1; background: none; border: 0; color: #c8d9ee; font-size: 18px; line-height: 1; padding: 0 2px; }
+@media (max-width: 640px) { .aviso-flutuante { right: 16px; top: 64px; } }
+@media print { .aviso-flutuante { display: none !important; } }

@@ -39,3 +39,40 @@ export const entradaInicial = () => EXEMPLOS[0].entrada;
 export const icmsDaEmpresa = (e: Entrada, op: OperacaoIcms): EntradaIcms => ({
   ...op, ufOrigem: e.uf, vendedorSimples: e.regimeAtual === 'SN_UNIFICADO' || e.regimeAtual === 'SN_HIBRIDO',
 });
+
+/** Tudo o que o usuário preencheu, para salvar uma empresa ou levar por link. */
+export interface Pacote {
+  entrada: Entrada;
+  operacao: OperacaoIcms;
+  filtro: FiltroBeneficios;
+  contrato?: unknown;
+}
+
+export interface EmpresaSalva extends Pacote { id: string; nome: string; salvaEm: string }
+
+export const salvasValidas = (v: unknown): v is EmpresaSalva[] =>
+  Array.isArray(v) && v.every((x) => !!x && typeof x === 'object' && typeof x.id === 'string' && entradaValida(x.entrada));
+
+/** JSON → UTF-8 → base64url. Vai no fragmento (#), que o navegador não envia ao servidor. */
+export function codificarPacote(p: Pacote): string {
+  const bytes = new TextEncoder().encode(JSON.stringify(p));
+  let bin = '';
+  bytes.forEach((b) => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+export function decodificarPacote(txt: string): Pacote | null {
+  try {
+    const bin = atob(txt.replace(/-/g, '+').replace(/_/g, '/'));
+    const p = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
+    if (!entradaValida(p?.entrada)) return null;
+    return {
+      entrada: p.entrada,
+      operacao: operacaoValida(p.operacao) ? p.operacao : OPERACAO_PADRAO,
+      filtro: filtroValido(p.filtro) ? p.filtro : FILTRO_PADRAO,
+      contrato: p.contrato,
+    };
+  } catch {
+    return null;
+  }
+}

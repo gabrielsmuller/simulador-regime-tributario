@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { NOMES_REGIME, NOMES_UF, VERSAO_PARAMETROS } from '../motor';
 import { validar } from './diagnostico';
 import {
-  FILTRO_PADRAO, OPERACAO_PADRAO, entradaInicial, entradaValida, filtroValido, operacaoValida, usePersistente,
+  FILTRO_PADRAO, OPERACAO_PADRAO, codificarPacote, decodificarPacote, entradaInicial, entradaValida, filtroValido,
+  operacaoValida, salvasValidas, usePersistente, type EmpresaSalva, type Pacote,
 } from './estado';
 import type { Exemplo } from './exemplos';
 
@@ -18,7 +19,7 @@ const traco = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLi
 const Icone = ({ children }: { children: ReactNode }) => (
   <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true" className="nav-icone">{children}</svg>
 );
-const ICONES: Record<Modulo | 'dados' | 'analise' | 'menu' | 'recolher', ReactNode> = {
+const ICONES: Record<Modulo | 'dados' | 'analise' | 'menu' | 'recolher' | 'link', ReactNode> = {
   regimes: <path {...traco} d="M3 15V9M8 15V5M13 15v-4M2 17h14" />,
   'st-difal': <><path {...traco} d="M2 6h10M9 3l3 3-3 3" /><path {...traco} d="M16 12H6M9 9l-3 3 3 3" /></>,
   beneficios: <path {...traco} d="M9 2l2 4.2 4.6.6-3.3 3.2.8 4.6L9 12.4 4.9 14.6l.8-4.6L2.4 6.8 7 6.2z" />,
@@ -27,6 +28,7 @@ const ICONES: Record<Modulo | 'dados' | 'analise' | 'menu' | 'recolher', ReactNo
   dados: <><rect {...traco} x="3" y="3" width="12" height="12" rx="2" /><path {...traco} d="M6 7h6M6 10h4" /></>,
   analise: <path {...traco} d="M3 13l4-4 3 3 5-6" />,
   menu: <path {...traco} d="M3 5h12M3 9h12M3 13h12" />,
+  link: <><path {...traco} d="M7.5 10.5l3-3" /><path {...traco} d="M8.5 5l1.2-1.2a3 3 0 0 1 4.3 4.3L12.8 9.3M9.5 13l-1.2 1.2a3 3 0 0 1-4.3-4.3l1.2-1.2" /></>,
   recolher: <path {...traco} d="M11 4L6 9l5 5" />,
 };
 
@@ -38,10 +40,17 @@ const TITULOS: Record<Modulo, string> = {
 /** Dentro de um iframe (ex.: página publicada) a impressão costuma ser bloqueada. */
 const podeImprimir = (() => { try { return window.self === window.top; } catch { return false; } })();
 
+/** "#preco" ou, num link compartilhado, "#preco?d=<dados>". */
 const lerHash = (): Modulo => {
-  const h = window.location.hash.replace('#', '');
+  const h = window.location.hash.replace('#', '').split('?')[0];
   return h in TITULOS ? (h as Modulo) : 'regimes';
 };
+const dadosDoHash = (): Pacote | null => {
+  const m = window.location.hash.match(/[?&]d=([A-Za-z0-9_-]+)/);
+  return m ? decodificarPacote(m[1]) : null;
+};
+
+interface Aviso { texto: string; link?: string; desfazer?: () => void }
 
 export function App() {
   const [modulo, setModulo] = useState<Modulo>(lerHash);
@@ -53,13 +62,62 @@ export function App() {
   const [operacao, setOperacao] = usePersistente('simulador-reforma:operacao:v1', () => OPERACAO_PADRAO, operacaoValida);
   const [filtro, setFiltro] = usePersistente('simulador-reforma:beneficios:v1', () => FILTRO_PADRAO, filtroValido);
   const [contrato, setContrato] = usePersistente('simulador-reforma:contrato:v1', () => CONTRATO_PADRAO, contratoValido);
+  const [salvas, setSalvas] = usePersistente<EmpresaSalva[]>('simulador-reforma:salvas:v1', () => [], salvasValidas);
+  const [aviso, setAviso] = useState<Aviso | null>(null);
   const valido = validar(empresa).erros.length === 0;
 
+  const pacote = (): Pacote => ({ entrada: empresa, operacao, filtro, contrato });
+  const carregar = (p: Pacote) => {
+    setEmpresa(p.entrada);
+    setOperacao(p.operacao);
+    setFiltro(p.filtro);
+    setContrato(contratoValido(p.contrato) ? p.contrato : CONTRATO_PADRAO);
+  };
+
   useEffect(() => {
-    const ouvir = () => setModulo(lerHash());
+    const ouvir = () => {
+      const m = lerHash();
+      setModulo(m);
+      const p = dadosDoHash();
+      if (!p) return;
+      carregar(p);
+      if (validar(p.entrada).erros.length === 0) setEtapa('analise');
+      try { history.replaceState(null, '', `#${m}`); } catch { /* ignora */ }
+      setAviso({ texto: `Análise de "${p.entrada.nomeEmpresa?.trim() || 'empresa sem nome'}" aberta pelo link.` });
+    };
+    ouvir();
     window.addEventListener('hashchange', ouvir);
     return () => window.removeEventListener('hashchange', ouvir);
   }, []);
+
+  useEffect(() => {
+    if (!aviso) return;
+    const t = setTimeout(() => setAviso(null), aviso.link ? 20_000 : 6_000);
+    return () => clearTimeout(t);
+  }, [aviso]);
+
+  const copiarLink = async () => {
+    const url = `${location.origin}${location.pathname}#${modulo}?d=${codificarPacote(pacote())}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setAviso({ texto: 'Link copiado. Ele leva os dados desta empresa: envie só para quem pode vê-los.' });
+    } catch {
+      setAviso({ texto: 'Copie o link abaixo. Ele leva os dados desta empresa.', link: url });
+    }
+  };
+  const salvar = () => {
+    const nome = empresa.nomeEmpresa?.trim() || 'Empresa sem nome';
+    const existente = salvas.find((s) => s.nome === nome);
+    const item: EmpresaSalva = { id: existente?.id ?? String(Date.now()), nome, salvaEm: new Date().toISOString(), ...pacote() };
+    setSalvas(existente ? salvas.map((s) => (s.id === item.id ? item : s)) : [item, ...salvas]);
+    setAviso({ texto: existente ? `"${nome}" atualizada.` : `"${nome}" salva neste navegador.` });
+  };
+  const excluir = (id: string) => {
+    const antes = salvas;
+    const nome = salvas.find((s) => s.id === id)?.nome;
+    setSalvas(salvas.filter((s) => s.id !== id));
+    setAviso({ texto: `"${nome}" removida.`, desfazer: () => { setSalvas(antes); setAviso(null); } });
+  };
   const aplicarExemplo = (x: Exemplo) => {
     setEmpresa(x.entrada);
     setOperacao({ ...OPERACAO_PADRAO, ...x.operacao, valor: x.operacao?.valor ?? Math.round(x.entrada.faturamentoMensal * 0.3) });
@@ -141,19 +199,34 @@ export function App() {
             {migalha && <><span aria-hidden="true">/</span><b>{migalha}</b></>}
           </nav>
           <span className="topo-info">{NOMES_UF[empresa.uf]} · {regime}</span>
+          <button type="button" className="botao fantasma pequeno topo-link" disabled={!valido} onClick={copiarLink}
+            title="Copia um link com os dados desta empresa, para abrir em outro aparelho">
+            <Icone>{ICONES.link}</Icone><span>Copiar link</span>
+          </button>
         </header>
 
         <main className="conteudo">
           {modulo === 'regimes' && (
-            <ModuloRegimes entrada={empresa} onChange={setEmpresa} onExemplo={aplicarExemplo} etapa={etapa} onEtapa={setEtapa} />
+            <ModuloRegimes entrada={empresa} onChange={setEmpresa} onExemplo={aplicarExemplo} etapa={etapa} onEtapa={setEtapa}
+              salvas={{ lista: salvas, onSalvar: salvar, onExcluir: excluir,
+                onCarregar: (s) => { carregar(s); setAviso({ texto: `"${s.nome}" carregada.` }); } }} />
           )}
           {modulo === 'st-difal' && <ModuloIcms empresa={empresa} op={operacao} onOp={setOperacao} />}
           {modulo === 'beneficios' && (
             <ModuloBeneficios empresa={empresa} op={operacao} onOp={setOperacao} filtro={filtro} onFiltro={setFiltro} />
           )}
           {modulo === 'preco' && <ModuloPreco empresa={empresa} contrato={contrato} onContrato={setContrato} onDados={() => ir('regimes', 'dados')} />}
-          {modulo === 'relatorio' && <ModuloRelatorio empresa={empresa} op={operacao} filtro={filtro} onIr={(m) => ir(m, m === 'regimes' && valido ? 'analise' : undefined)} podeImprimir={podeImprimir} />}
+          {modulo === 'relatorio' && <ModuloRelatorio empresa={empresa} op={operacao} filtro={filtro} contrato={contrato}onIr={(m) => ir(m, m === 'regimes' && valido ? 'analise' : undefined)} podeImprimir={podeImprimir} />}
         </main>
+
+        {aviso && (
+          <div className="aviso-flutuante" role="status">
+            <p>{aviso.texto}</p>
+            {aviso.link && <input className="entrada-texto" readOnly value={aviso.link} onFocus={(ev) => ev.target.select()} aria-label="Link da análise" />}
+            {aviso.desfazer && <button type="button" className="link" onClick={aviso.desfazer}>Desfazer</button>}
+            <button type="button" className="aviso-fechar" aria-label="Fechar aviso" onClick={() => setAviso(null)}>×</button>
+          </div>
+        )}
 
         <footer className="rodape">
           Estimativas com base na legislação vigente e nas premissas informadas. Não substituem a análise de um contador.

@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
 import {
-  ATIVIDADES, NOMES_REGIME, NOMES_UF, REGIMES, VERSAO_PARAMETROS, avaliarBeneficios, calcularIcms, rankingDestinos, simular,
-  type Entrada,
+  ATIVIDADES, NOMES_REGIME, NOMES_UF, REGIMES, VERSAO_PARAMETROS, ajustePreco, avaliarBeneficios, calcularIcms, rankingDestinos,
+  simular, type Entrada, type Regime,
 } from '../motor';
 import { Icone, Painel } from './campos';
 import { pontosDeAtencao, validar } from './diagnostico';
 import { icmsDaEmpresa, type FiltroBeneficios, type OperacaoIcms } from './estado';
 import { brl, pct } from './formato';
+import { calcularContrato, regimeDoContrato, variacao, type Contrato } from './ModuloPreco';
 
-type Destino = 'regimes' | 'st-difal' | 'beneficios';
+type Destino = 'regimes' | 'st-difal' | 'beneficios' | 'preco';
 
 const maiuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
@@ -20,10 +21,11 @@ const A_VALIDAR = [
   'DIFAL: método de cálculo (base dupla ou única) no estado de destino e dispensa para o Simples',
   'Existência de ST para o produto (NCM/CEST) entre os estados e a MVA aplicável',
   'Elegibilidade, percentuais e contrapartidas de cada benefício fiscal no termo de concessão',
+  'Reajuste de preço: carga de hoje (PIS/COFINS) e premissa de custos fixos',
 ];
 
-export function ModuloRelatorio({ empresa, op, filtro, onIr, podeImprimir }: {
-  empresa: Entrada; op: OperacaoIcms; filtro: FiltroBeneficios; onIr: (m: Destino) => void; podeImprimir: boolean;
+export function ModuloRelatorio({ empresa, op, filtro, contrato, onIr, podeImprimir }: {
+  empresa: Entrada; op: OperacaoIcms; filtro: FiltroBeneficios; contrato: Contrato; onIr: (m: Destino) => void; podeImprimir: boolean;
 }) {
   const valido = validar(empresa).erros.length === 0;
   const resultado = useMemo(() => (valido ? simular(empresa) : null), [empresa, valido]);
@@ -36,6 +38,18 @@ export function ModuloRelatorio({ empresa, op, filtro, onIr, podeImprimir }: {
     perfis: filtro.perfis, volume: op.valor, ufOrigem: icms.ufOrigem, ufDestino: op.ufDestino,
     vendedorSimples: icms.vendedorSimples, importado: op.importado,
   }).filter((a) => a.aderente), [filtro.perfis, chave]);
+  // Reajuste de preço: regime de hoje, o de menor carga em 2027 e o escolhido no módulo de preço
+  const precos = useMemo(() => {
+    if (!resultado) return null;
+    const a = resultado.anos[0];
+    const elegiveis = REGIMES.filter((r) => a.regimes[r].elegivel);
+    const hoje: Regime = empresa.regimeAtual === 'SN_HIBRIDO' ? 'SN_UNIFICADO' : empresa.regimeAtual;
+    const doContrato = regimeDoContrato(empresa, contrato, elegiveis);
+    const lista = [hoje, a.menor, doContrato].filter((r, i, l) => elegiveis.includes(r) && l.indexOf(r) === i);
+    const ajustes = lista.map((r) => ajustePreco(empresa, r));
+    const doC = ajustes.find((x) => x.regime === doContrato);
+    return { hoje, ajustes, contrato: doC ? { regime: doContrato, ...calcularContrato(contrato, doC.anos) } : null };
+  }, [empresa, contrato, resultado]);
 
   if (!resultado) {
     return (
@@ -126,8 +140,37 @@ export function ModuloRelatorio({ empresa, op, filtro, onIr, podeImprimir }: {
         )}
       </Painel>
 
+      {precos && precos.ajustes.length > 0 && (
+        <Painel titulo="2. Preço para manter o lucro" subtitulo="Quanto o preço muda, por ano, em relação a hoje"
+          acao={<button type="button" className="botao fantasma pequeno" onClick={() => onIr('preco')}>Ver detalhes</button>}>
+          <div className="tabela-rolagem">
+            <table className="tabela compacta">
+              <thead><tr><th>Regime</th>{resultado.anos.map((a) => <th key={a.ano} className="num">{a.ano}</th>)}</tr></thead>
+              <tbody>
+                {precos.ajustes.map((x) => (
+                  <tr key={x.regime}>
+                    <th scope="row"><i className={`ponto c-${x.regime}`} />{NOMES_REGIME[x.regime].nome}{x.regime === precos.hoje && <span className="tag">hoje</span>}</th>
+                    {x.anos.map((a) => (
+                      <td key={a.ano} className={`num ${a.fator !== null && a.fator > 1.0005 ? 'pior' : a.fator !== null && a.fator < 0.9995 ? 'melhor' : ''}`}>
+                        {a.fator === null ? '—' : Math.abs(a.fator - 1) < 0.0005 ? 'igual' : variacao(a.fator)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {precos.contrato && Number.isFinite(precos.contrato.ajustado) && (
+            <p className="nota">
+              Contrato de {brl(contrato.valor)}/mês de {contrato.inicio} a {contrato.fim} no {NOMES_REGIME[precos.contrato.regime].nome}:
+              {' '}{brl(precos.contrato.original)} hoje, {brl(precos.contrato.ajustado)} corrigido ({brl(precos.contrato.ajustado - precos.contrato.original)}).
+            </p>
+          )}
+        </Painel>
+      )}
+
       <div className="grade-analise igual">
-        <Painel titulo="2. ICMS nas vendas para outros estados" subtitulo={`Venda de ${brl(op.valor)} de ${icms.ufOrigem} para ${NOMES_UF[op.ufDestino]}`}
+        <Painel titulo="3. ICMS nas vendas para outros estados" subtitulo={`Venda de ${brl(op.valor)} de ${icms.ufOrigem} para ${NOMES_UF[op.ufDestino]}`}
           acao={<button type="button" className="botao fantasma pequeno" onClick={() => onIr('st-difal')}>Ver mapa</button>}>
           <dl className="enq-lista">
             <div><dt>ICMS total na operação</dt><dd>{brl(opDestino.total)} · {pct(opDestino.carga, 1)}</dd></div>
@@ -143,7 +186,7 @@ export function ModuloRelatorio({ empresa, op, filtro, onIr, podeImprimir }: {
           </ol>
         </Painel>
 
-        <Painel titulo="3. Benefícios fiscais" subtitulo="Para o perfil marcado no buscador"
+        <Painel titulo="4. Benefícios fiscais" subtitulo="Para o perfil marcado no buscador"
           acao={<button type="button" className="botao fantasma pequeno" onClick={() => onIr('beneficios')}>Ver todos</button>}>
           {beneficios.length === 0 ? <p className="nota">Nenhum benefício para o perfil informado.</p> : (
             <ul className="lista-beneficios">
@@ -159,14 +202,14 @@ export function ModuloRelatorio({ empresa, op, filtro, onIr, podeImprimir }: {
       </div>
 
       <div className="grade-analise igual">
-        <Painel titulo="4. Pontos de atenção">
+        <Painel titulo="5. Pontos de atenção">
           {atencao.length === 0 ? <p className="nota">Nenhum alerta específico.</p> : (
             <ul className="atencao">
               {atencao.map((m) => <li key={m.titulo} className={`sev-${m.tipo}`}><Icone tipo={m.tipo} /><div><b>{m.titulo}</b><p>{m.texto}</p></div></li>)}
             </ul>
           )}
         </Painel>
-        <Painel titulo="5. Para validar com o contador">
+        <Painel titulo="6. Para validar com o contador">
           <ul className="checklist">{A_VALIDAR.map((t) => <li key={t}><span className="caixa" aria-hidden="true" />{t}</li>)}</ul>
         </Painel>
       </div>

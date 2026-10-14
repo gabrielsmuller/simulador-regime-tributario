@@ -19,6 +19,7 @@ type AbaIcms = 'memoria' | 'estados' | 'transicao' | 'premissas';
 
 export function ModuloIcms({ empresa, op, onOp }: { empresa: Entrada; op: OperacaoIcms; onOp: (o: OperacaoIcms) => void }) {
   const [maisOpcoes, setMaisOpcoes] = useState(false);
+  const [ajudaSt, setAjudaSt] = useState(false);
   const [aba, setAba] = useState<AbaIcms>('memoria');
   const e = icmsDaEmpresa(empresa, op);
   const set = <K extends keyof OperacaoIcms>(k: K, v: OperacaoIcms[K]) => onOp({ ...op, [k]: v });
@@ -78,10 +79,30 @@ export function ModuloIcms({ empresa, op, onOp }: { empresa: Entrada; op: Operac
           </label>
         </div>
         <div className="parametros-rodape">
+          <button type="button" className="link" aria-expanded={ajudaSt} onClick={() => setAjudaSt(!ajudaSt)}>
+            {ajudaSt ? 'Fechar ajuda sobre ST' : 'Não sabe se o produto tem ST?'}
+          </button>
           <button type="button" className="link" aria-expanded={maisOpcoes} onClick={() => setMaisOpcoes(!maisOpcoes)}>
             {maisOpcoes ? 'Ocultar opções avançadas' : 'Opções avançadas: método do DIFAL, alíquota interna e FCP do destino'}
           </button>
         </div>
+        {ajudaSt && (
+          <div className="ajuda-st">
+            <div>
+              <h3>Na nota de compra do fornecedor</h3>
+              <p>Se o produto tem <b>CST 10, 30, 60 ou 70</b> (ou <b>CSOSN 201, 202, 203 ou 500</b>, para fornecedor do Simples), ele está na substituição tributária.</p>
+            </div>
+            <div>
+              <h3>De onde vem a MVA</h3>
+              <p>Do convênio ou protocolo do produto entre os estados. Ela costuma aparecer no XML da nota do fornecedor, no campo da MVA da ST. Na dúvida, pergunte ao fornecedor ou ao contador.</p>
+            </div>
+            <div>
+              <h3>Segmentos que mais têm ST</h3>
+              <p>Autopeças, bebidas, cosméticos e perfumaria, materiais de construção e elétricos, produtos de limpeza, medicamentos, alimentos, eletrônicos, pneus e tintas (Conv. ICMS 142/2018).</p>
+            </div>
+            {!op.temSt && <button type="button" className="botao fantasma pequeno" onClick={() => set('temSt', true)}>Simular com ST</button>}
+          </div>
+        )}
         {maisOpcoes && (
           <div className="parametros extras">
             <div className="parametro">

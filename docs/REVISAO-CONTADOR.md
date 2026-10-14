@@ -44,7 +44,7 @@ Legenda: 🔴 alto impacto no resultado · 🟡 médio · 🟢 baixo
 
 ## 4. Benefícios fiscais (`src/motor/beneficios.ts`)
 
-Catálogo inicial de 9 benefícios em 6 estados. **Todos marcados "confirmar com contador" na tela.**
+Catálogo inicial de 12 benefícios em 8 estados. **Todos marcados "confirmar com contador" na tela.**
 
 | | Benefício | Carga usada | Pergunta |
 |---|---|---|---|
@@ -56,18 +56,21 @@ Catálogo inicial de 9 benefícios em 6 estados. **Todos marcados "confirmar com
 | 🟡 | PE · Prodepe importador | Crédito de 47,5% do débito (carga 2,1% a 4%) | Percentual varia por decreto |
 | 🟡 | GO · e-commerce | Sem percentual (não quantificado) | Percentual vigente após a alteração de 04/2026 |
 | 🟡 | GO · atacadista e indústria | Sem percentual | Percentual do crédito outorgado e exigência de TARE |
-| 🟡 | PR · Paraná Competitivo | Sem percentual | Percentual do Decreto 7.721/2024 e renovações após 30/09/2026 |
+| 🔴 | PR · Paraná Competitivo importação | 1,5% nas saídas a 4% (redação consolidada mais recente; a original previa 1%) | Confirmar a carga mínima vigente do art. 14 |
+| 🟡 | PR · Paraná Competitivo e-commerce | Sem percentual | Percentual do regime especial e renovações após 30/09/2026 |
+| 🔴 | TO · Lei da Internet (Lei 1.641/2005) | 1% interestadual (2% importados) | Confirmar vigência, Decreto 6.213/2021 e Portaria 166/2025 |
+| 🟡 | BA · Desenvolve | Sem carga (dilação de até 90% por até 72 meses) | Classe e percentual do projeto |
 
 Também a validar:
 - A economia compara só o ICMS de origem. Não considera custo de filial, logística ou contrapartidas (fundos, investimentos, empregos).
-- Estados ainda não cobertos: AL, AM (ZFM), BA (Desenvolve), CE, MS, MT, RJ, RS, SP, TO e outros.
+- Estados ainda não cobertos: AL, AM (ZFM), CE, MS, MT, RJ, RS, SP e outros. Em AL não achamos regime específico de e-commerce.
 
 ## 5. Gerais
 
 - Valores em `number` com arredondamento por linha (estimativa). Para laudo formal, migrar para decimal.
 - Os dados ficam só no navegador do usuário (localStorage). Não há cadastro nem servidor.
 - Textos de recomendação são automáticos e determinísticos: revisar o tom e a responsabilidade (termo de uso).
-- Prazo de opção entre Simples Unificado e Híbrido: confirmar o calendário vigente. Temos 30/10/2026 (Res. CGSN 194/2026, prorrogação) para vigorar em jan.–jun./2027; o simuladorreforma.com.br cita janelas em setembro e março (art. 40-D da Res. CGSN 140/2018, redação da 190/2026). Hoje a aba "Pontos de atenção" mostra "Prazo de opção até 30/10/2026" (`src/ui/diagnostico.ts`): confirmar ou retirar.
+- Prazo de opção entre Simples Unificado e Híbrido: confirmar o calendário vigente. Temos 30/10/2026 (Res. CGSN 194/2026, prorrogação) para vigorar em jan.–jun./2027; o simuladorreforma.com.br cita janelas em setembro e março (art. 40-D da Res. CGSN 140/2018, redação da 190/2026). Enquanto não houver confirmação, a aba "Pontos de atenção" só avisa que há prazo, sem data (`src/ui/diagnostico.ts`). Depois de confirmado, voltar a mostrar a data.
 
 ## 6. Preço e contratos (`src/motor/preco.ts`)
 

@@ -127,7 +127,7 @@ export function ModuloBeneficios({ empresa, op, onOp, filtro, onFiltro }: {
       )}
 
       <p className="nota aviso">
-        Levantamento inicial de {avaliacoes.length} benefícios em 6 estados (outubro de 2026), a confirmar com um contador e no termo de concessão.
+        Levantamento inicial de {avaliacoes.length} benefícios em {new Set(avaliacoes.map((a) => a.b.uf)).size} estados (outubro de 2026), a confirmar com um contador e no termo de concessão.
         A economia considera só o ICMS de origem, sem custos de filial ou contrapartidas. Os benefícios de ICMS terminam até 2032.
       </p>
     </div>

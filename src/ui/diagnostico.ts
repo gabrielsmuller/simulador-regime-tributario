@@ -28,8 +28,8 @@ export function pontosDeAtencao(e: Entrada, r: Resultado): Mensagem[] {
   }
   if (e.regimeAtual.startsWith('SN_')) {
     m.push({
-      tipo: 'atencao', titulo: 'Prazo de opção até 30/10/2026',
-      texto: 'A escolha entre Simples Unificado e Híbrido vale para o 1º semestre de 2027 (Res. CGSN 186/2026 e 194/2026). Depois, a próxima janela é em 2027.',
+      tipo: 'atencao', titulo: 'A escolha entre Unificado e Híbrido tem prazo',
+      texto: 'A opção é feita em janelas definidas pelo Comitê Gestor do Simples (CGSN) e vale por um semestre. Confirme com seu contador a data da próxima janela antes de decidir.',
     });
   }
   for (const v of r.viradas) {

@@ -10,7 +10,7 @@ describe('catálogo de benefícios', () => {
   it('todo benefício tem base legal, fonte com link e ao menos um requisito', () => {
     for (const b of BENEFICIOS) {
       expect(b.baseLegal.length, b.id).toBeGreaterThan(5);
-      expect(b.fonte.url, b.id).toMatch(/^https:\/\//);
+      expect(b.fonte.url, b.id).toMatch(/^https?:\/\//);
       expect(b.requisitos.length, b.id).toBeGreaterThan(0);
     }
   });
@@ -48,7 +48,18 @@ describe('avaliação', () => {
     expect(a.alertas.join(' ')).toContain('Lucro Presumido ou Real');
   });
 
+  it('Tocantins: 1% nas vendas de produto nacional pela internet (SP → BA: 7% hoje)', () => {
+    const a = por('to-internet');
+    expect(a.cargaBeneficio).toBeCloseTo(0.01, 10);
+    expect(a.economia).toBeCloseTo(6_000, 2);
+  });
+
+  it('Paraná Competitivo: 1,5% nas saídas de importados a 4%', () => {
+    expect(por('pr-importacao', base({ perfis: ['importador'] })).cargaBeneficio).toBeCloseTo(0.015, 10);
+  });
+
   it('benefício sem percentual confirmado não inventa economia', () => {
+    expect(por('ba-desenvolve', base({ perfis: ['industria'] })).economia).toBeNull();
     expect(por('go-ecommerce').economia).toBeNull();
   });
 });

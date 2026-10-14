@@ -5,7 +5,8 @@ import {
 import { Campo, CampoNumero, Icone, Secao, Segmentado } from './campos';
 import { validar } from './diagnostico';
 import { EXEMPLOS, type Exemplo } from './exemplos';
-import { brl, escreverNumero, pct } from './formato';
+import { brl, brlCurto, escreverNumero, pct } from './formato';
+import type { Salvas } from './ModuloRegimes';
 
 const REGIMES_HOJE: { valor: Regime; rotulo: string }[] = [
   { valor: 'SN_UNIFICADO', rotulo: 'Simples Nacional' },
@@ -15,8 +16,8 @@ const REGIMES_HOJE: { valor: Regime; rotulo: string }[] = [
 
 const proporcao = (v: number, fat: number) => (fat > 0 ? `${pct(v / fat, 1)} do faturamento` : '');
 
-export function EtapaDados({ entrada, onChange, onAvancar, onExemplo }: {
-  entrada: Entrada; onChange: (e: Entrada) => void; onAvancar: () => void; onExemplo?: (x: Exemplo) => void;
+export function EtapaDados({ entrada, onChange, onAvancar, onExemplo, salvas }: {
+  entrada: Entrada; onChange: (e: Entrada) => void; onAvancar: () => void; onExemplo?: (x: Exemplo) => void; salvas?: Salvas;
 }) {
   const set = <K extends keyof Entrada>(k: K, v: Entrada[K]) => onChange({ ...entrada, [k]: v });
   const setAv = <K extends keyof Entrada['avancado']>(k: K, v: Entrada['avancado'][K]) =>
@@ -25,13 +26,39 @@ export function EtapaDados({ entrada, onChange, onAvancar, onExemplo }: {
   const fat = entrada.faturamentoMensal;
   const sugestaoCompras = Math.round(fat * ativ.comprasPadrao);
   const { erros, avisos } = validar(entrada);
+  const nomeAtual = entrada.nomeEmpresa?.trim() || 'Empresa sem nome';
 
   return (
     <div className="etapa">
-      <div className="etapa-titulo">
-        <h1>Dados da empresa</h1>
-        <p>Use médias mensais dos últimos 12 meses ou comece por um exemplo.</p>
+      <div className="etapa-titulo com-acoes">
+        <div>
+          <h1>Dados da empresa</h1>
+          <p>Use médias mensais dos últimos 12 meses ou comece por um exemplo.</p>
+        </div>
+        {salvas && (
+          <div className="acoes">
+            <button type="button" className="botao fantasma" onClick={salvas.onSalvar} disabled={erros.length > 0}
+              title="Guarda esta empresa neste navegador para abrir depois">
+              {salvas.lista.some((s) => s.nome === nomeAtual) ? 'Atualizar empresa salva' : 'Salvar empresa'}
+            </button>
+          </div>
+        )}
       </div>
+
+      {salvas && salvas.lista.length > 0 && (
+        <div className="exemplos salvas" role="group" aria-label="Suas empresas">
+          <span className="exemplos-rotulo">Suas empresas</span>
+          {salvas.lista.map((s) => (
+            <div key={s.id} className={`exemplo salva ${s.nome === nomeAtual ? 'on' : ''}`}>
+              <button type="button" className="salva-abrir" aria-pressed={s.nome === nomeAtual} onClick={() => salvas.onCarregar(s)}>
+                <b>{s.nome}</b>
+                <span>{NOMES_REGIME[s.entrada.regimeAtual].nome.replace('Simples Unificado', 'Simples Nacional')} · {brlCurto(s.entrada.faturamentoMensal)}/mês</span>
+              </button>
+              <button type="button" className="salva-excluir" aria-label={`Remover ${s.nome}`} title="Remover" onClick={() => salvas.onExcluir(s.id)}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="exemplos" role="group" aria-label="Empresas de exemplo">
         <span className="exemplos-rotulo">Exemplos</span>

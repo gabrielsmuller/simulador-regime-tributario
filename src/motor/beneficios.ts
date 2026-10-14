@@ -1,5 +1,5 @@
 /**
- * Catálogo de benefícios estaduais de ICMS (levantamento de 14/10/2026).
+ * Catálogo de benefícios estaduais de ICMS (levantamento de 14/10/2026, ampliado no mesmo dia).
  *
  * Cada item traz a base legal e a fonte consultada. As cargas são de referência,
  * vindas da norma ou de consultas e materiais técnicos, e devem ser confirmadas
@@ -184,19 +184,69 @@ export const BENEFICIOS: Beneficio[] = [
     fonte: { rotulo: 'Parecer GEOT 41/2020', url: 'https://www.legisweb.com.br/legislacao/?id=466884' },
   },
   {
-    id: 'pr-competitivo', uf: 'PR', nome: 'Paraná Competitivo · e-commerce e importação', tipo: 'Crédito presumido',
-    perfis: ['ecommerce', 'importador'],
-    operacao: 'Quem opera só por comércio eletrônico, ou importa para revenda com desembaraço no PR.',
-    aplicaA: 'interestadual',
-    cargaTexto: 'Percentual a confirmar no Decreto 7.721/2024 (materiais antigos citam 1% a 2,5%).',
+    id: 'pr-importacao', uf: 'PR', nome: 'Paraná Competitivo · importação', tipo: 'Crédito presumido',
+    perfis: ['importador'],
+    operacao: 'Revenda de mercadoria importada por portos e aeroportos do Paraná, com desembaraço no estado.',
+    aplicaA: 'importados',
+    cargaTexto: 'Crédito presumido até a carga mínima de 1,5% nas saídas a 4% (redação consolidada mais recente; a original previa 1%). Usamos 1,5%.',
+    carga: (i) => (i <= 0.04 ? 0.015 : 0.025),
     exigeRegimeNormal: true,
     requisitos: [
       'Estabelecimento no Paraná',
-      'Operação exclusivamente por comércio eletrônico, ou desembaraço em portos e aeroportos do PR',
+      'Importação por portos ou aeroportos paranaenses, com desembaraço no estado',
+      'NCM fora da lista de impedidos (Resolução SEFA 304/2025)',
     ],
-    cuidados: ['Substitui os demais créditos e não se acumula com outro benefício', 'Alguns regimes de e-commerce vencem em 30/09/2026: confira a renovação'],
+    cuidados: [
+      'Substitui os demais créditos e não se acumula com outro benefício',
+      'Exige depósito de percentual em fundo até fevereiro do ano seguinte (Decreto 9.083/2025)',
+    ],
+    baseLegal: 'Decreto 7.721/2024, art. 14 (Programa Paraná Competitivo)',
+    fonte: { rotulo: 'Decreto 7.721/2024 (SEFA/PR)', url: 'https://www.sefanet.pr.gov.br/dados/SEFADOCUMENTOS/102202407721.pdf' },
+  },
+  {
+    id: 'pr-ecommerce', uf: 'PR', nome: 'Paraná Competitivo · comércio eletrônico', tipo: 'Crédito presumido (regime especial)',
+    perfis: ['ecommerce'],
+    operacao: 'Quem opera só por comércio eletrônico, com vendas a consumidor final de outros estados.',
+    aplicaA: 'consumidor_final',
+    cargaTexto: 'Percentual a confirmar no regime especial concedido (Decreto 7.721/2024).',
+    exigeRegimeNormal: true,
+    requisitos: ['Estabelecimento no Paraná', 'Operação exclusivamente por comércio eletrônico', 'Regime especial concedido pela SEFA/PR'],
+    cuidados: ['Alguns regimes de e-commerce venceram em 30/09/2026: confira a renovação'],
     baseLegal: 'Decreto 7.721/2024 (Programa Paraná Competitivo)',
     fonte: { rotulo: 'Decreto 7.721/2024 (SEFA/PR)', url: 'https://www.sefanet.pr.gov.br/dados/SEFADOCUMENTOS/102202407721.pdf' },
+  },
+  {
+    id: 'to-internet', uf: 'TO', nome: 'Lei da Internet · comércio eletrônico', tipo: 'Crédito presumido',
+    perfis: ['ecommerce'],
+    operacao: 'Empresa que vende exclusivamente pela internet ou por correspondência a consumidor final de outros estados.',
+    aplicaA: 'consumidor_final',
+    cargaTexto: 'Crédito presumido para o ICMS ficar em 1% das vendas para outros estados; 2% para mercadoria importada.',
+    carga: (i) => (i <= 0.04 ? 0.02 : 0.01),
+    exigeRegimeNormal: true,
+    requisitos: [
+      'Inscrição no cadastro de contribuintes do Tocantins',
+      'Venda exclusivamente pela internet ou por correspondência',
+      'Permanecer estabelecida e operando no estado por pelo menos 5 anos',
+    ],
+    cuidados: ['O DIFAL continua devido ao estado de destino', 'Vigência até 31/12/2032 segundo fontes secundárias: confirmar'],
+    baseLegal: 'Lei 1.641/2005 (TO)',
+    fonte: { rotulo: 'Governo do Tocantins · incentivos fiscais', url: 'https://www.to.gov.br/sics/incentivos-fiscais/6b9wypu38j6p' },
+  },
+  {
+    id: 'ba-desenvolve', uf: 'BA', nome: 'Desenvolve · indústria', tipo: 'Dilação de prazo do ICMS',
+    perfis: ['industria'],
+    operacao: 'Projetos industriais aprovados: parte do ICMS próprio é paga anos depois, com desconto na antecipação.',
+    aplicaA: 'interestadual',
+    cargaTexto: 'Dilação de até 90% do saldo devedor mensal do ICMS, por até 72 meses; o percentual depende da classe do projeto. Não reduz a alíquota.',
+    exigeRegimeNormal: true,
+    requisitos: [
+      'Estabelecimento industrial na Bahia',
+      'Projeto aprovado pelo Conselho Deliberativo do Desenvolve',
+      'Classe do projeto define o percentual e o prazo',
+    ],
+    cuidados: ['Ganho financeiro (prazo e desconto), não redução direta de carga', 'Antecipação exige 10% do desconto ao Fundo de Combate à Pobreza'],
+    baseLegal: 'Lei 7.980/2001 e Decreto 8.205/2002 (BA)',
+    fonte: { rotulo: 'CONSEF/BA · Acórdão CJF 0154-12/25', url: 'http://mbusca.sefaz.ba.gov.br/consef/2025%20-%20ac%C3%B3rd%C3%A3os%20c%C3%A2maras/A-0154-12.25-VD.pdf' },
   },
 ];
 
